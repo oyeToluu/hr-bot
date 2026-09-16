@@ -1,0 +1,21 @@
+# ADD these two lines to your existing src/main/resources/application.properties
+# (which currently only has spring.application.name=hr-bot).
+#
+# app.jwt.secret MUST be at least 32 bytes (256 bits) for HS256 - JwtService
+# will throw a WeakKeyException at startup if it's too short. Do NOT reuse
+# the example value below in anything beyond local dev/coursework - generate
+# your own with:
+#   openssl rand -base64 48
+# (Git Bash on Windows has openssl too; if not, any 32+ character random
+# string works, it just needs to be unpredictable.)
+
+app.jwt.secret=SNxzCW68WSAIl+x0QKuk8eJvI+kbW6yA4NCQTb6UPaKP4VVetBp3YsfkDBXQerq/
+app.jwt.expiration-ms=604800000
+
+# ^ 604800000 ms = 7 days. Shorten this for tighter security once you add
+# a refresh-token flow; fine as-is for coursework demo purposes.
+
+# --- For later: before this ever goes anywhere public, move app.jwt.secret
+# out of version control (env var or a .env file that's gitignored) instead
+# of committing it in application.properties alongside your Mongo
+# credentials in compose.yaml.
