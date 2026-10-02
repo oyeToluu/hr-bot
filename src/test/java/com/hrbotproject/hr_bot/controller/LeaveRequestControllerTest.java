@@ -1,13 +1,16 @@
 package com.hrbotproject.hr_bot.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.hrbotproject.hr_bot.dto.LeaveRequestDtos.CreateLeaveRequest;
 import com.hrbotproject.hr_bot.model.Employee;
 import com.hrbotproject.hr_bot.model.LeaveRequest;
 import com.hrbotproject.hr_bot.security.EmployeePrincipal;
+import com.hrbotproject.hr_bot.security.JwtAuthenticationFilter;
+import com.hrbotproject.hr_bot.security.SecurityConfig;
 import com.hrbotproject.hr_bot.service.LeaveRequestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,19 +26,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Spring Boot 4 / Spring Framework 7 notes:
-//  - @SpringBootTest no longer wires MockMvc automatically, and @MockBean
-//    was removed in favour of @MockitoBean. @WebMvcTest brings both MockMvc
-//    and @MockitoBean support via spring-boot-starter-webmvc-test.
-//  - @WebMvcTest only scans @Controller/@ControllerAdvice-type beans, NOT
-//    our custom SecurityConfig (@Configuration). Since spring-security-test
-//    is on the classpath, Spring Boot's default (fallback) security chain
-//    applies here instead of our real one - it requires authentication on
-//    every request but doesn't know about our hasRole("HR_ADMIN") rules.
-//    That's fine for these two endpoints (open to any authenticated
-//    employee); testing the actual role restrictions belongs in a full
-//    @SpringBootTest / integration test that loads the real SecurityConfig.
+// Spring Boot 4 notes:
+//  - @MockBean was removed; @MockitoBean replaces it.
+//  - @WebMvcTest does NOT load our SecurityConfig by itself. Without it,
+//    Spring's default security chain applies, which has CSRF on and turns
+//    every POST into 403. @Import below loads the REAL SecurityConfig
+//    (CSRF off, JWT filter, 401 for missing token), so these tests check
+//    the same rules the web and Android apps will hit.
 @WebMvcTest(LeaveRequestController.class)
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
 class LeaveRequestControllerTest {
 
     @Autowired
@@ -46,6 +45,12 @@ class LeaveRequestControllerTest {
 
     @MockitoBean
     private LeaveRequestService leaveRequestService;
+
+    @MockitoBean
+    private com.hrbotproject.hr_bot.security.JwtService jwtService;
+
+    @MockitoBean
+    private com.hrbotproject.hr_bot.security.EmployeeUserDetailsService userDetailsService;
 
     private final Employee employee = Employee.builder()
             .id("emp-1")

@@ -1,9 +1,11 @@
 package com.hrbotproject.hr_bot.data;
 
 import com.hrbotproject.hr_bot.model.Employee;
+import com.hrbotproject.hr_bot.model.JobPosting;
 import com.hrbotproject.hr_bot.model.OnboardingFaq;
 import com.hrbotproject.hr_bot.model.PolicyDocument;
 import com.hrbotproject.hr_bot.repository.EmployeeRepository;
+import com.hrbotproject.hr_bot.repository.JobPostingRepository;
 import com.hrbotproject.hr_bot.repository.OnboardingFaqRepository;
 import com.hrbotproject.hr_bot.repository.PolicyDocumentRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final EmployeeRepository employeeRepository;
     private final OnboardingFaqRepository faqRepository;
     private final PolicyDocumentRepository policyDocumentRepository;
+    private final JobPostingRepository jobPostingRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -101,6 +104,36 @@ public class DemoDataSeeder implements CommandLineRunner {
                     ))
                     .build());
             System.out.println("[seed] created Employee Handbook 2026 policy document");
+        }
+
+        if (jobPostingRepository.count() == 0) {
+            jobPostingRepository.saveAll(List.of(
+                    JobPosting.builder()
+                            .title("Junior Backend Developer")
+                            .department("Engineering")
+                            .location("Lagos (hybrid)")
+                            .description("Build and maintain REST APIs for our HR platform using Java and Spring Boot.")
+                            .requiredSkills(List.of("Java", "Spring Boot", "REST API", "MongoDB", "Git"))
+                            .niceToHaveSkills(List.of("Docker", "JUnit", "React"))
+                            .minYearsExperience(2)
+                            .educationKeywords(List.of("BSc", "HND", "Computer Science"))
+                            .autoRejectBelow(40)
+                            .shortlistAt(70)
+                            .build(),
+                    JobPosting.builder()
+                            .title("HR Assistant")
+                            .department("Human Resources")
+                            .location("Lagos")
+                            .description("Support recruitment, onboarding and employee records.")
+                            .requiredSkills(List.of("Recruitment", "Onboarding", "Microsoft Excel", "Communication"))
+                            .niceToHaveSkills(List.of("CIPM", "HRIS", "Payroll"))
+                            .minYearsExperience(1)
+                            .educationKeywords(List.of("BSc", "HND"))
+                            .autoRejectBelow(40)
+                            .shortlistAt(70)
+                            .build()
+            ));
+            System.out.println("[seed] created 2 demo job postings");
         }
     }
 }

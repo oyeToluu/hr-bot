@@ -68,6 +68,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- ADDED for the CV screening bot: reads text out of PDF CVs.
+		     (.docx is read with plain java.util.zip, no library needed.) -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.5</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
