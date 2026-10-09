@@ -51,13 +51,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) 
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // No/invalid token -> 401 (not 403), so the web and Android
                 // clients know to send the user back to the login screen.
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
+                        // /me needs a logged-in staff member. It must come BEFORE
+                        // the /api/auth/** permitAll, because the first match wins.
+                        .requestMatchers("/api/auth/me").hasAnyRole("EMPLOYEE", "HR_ADMIN")
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // ---- Recruitment / CV screening ----
