@@ -9,6 +9,7 @@ import com.hrbotproject.hr_bot.repository.JobPostingRepository;
 import com.hrbotproject.hr_bot.repository.OnboardingFaqRepository;
 import com.hrbotproject.hr_bot.repository.PolicyDocumentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -25,13 +26,21 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final JobPostingRepository jobPostingRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // Read from application.properties (SEED_ADMIN_PASSWORD / SEED_EMPLOYEE_PASSWORD
+    // env vars when hosted), so the live admin password isn't the public default.
+    @Value("${app.seed.admin-password}")
+    private String adminPassword;
+
+    @Value("${app.seed.employee-password}")
+    private String employeePassword;
+
     @Override
     public void run(String... args) {
         if (employeeRepository.count() == 0) {
             employeeRepository.save(Employee.builder()
                     .fullName("Toni HR Admin")
                     .email("admin@hrbots.test")
-                    .password(passwordEncoder.encode("password123"))
+                    .password(passwordEncoder.encode(adminPassword))
                     .department("Human Resources")
                     .role(Employee.Role.HR_ADMIN)
                     .build());
@@ -39,13 +48,13 @@ public class DemoDataSeeder implements CommandLineRunner {
             employeeRepository.save(Employee.builder()
                     .fullName("Ada Okafor")
                     .email("ada@hrbots.test")
-                    .password(passwordEncoder.encode("password123"))
+                    .password(passwordEncoder.encode(employeePassword))
                     .department("Engineering")
                     .role(Employee.Role.EMPLOYEE)
                     .leaveBalance(20)
                     .build());
 
-            System.out.println("[seed] created demo employees: admin@hrbots.test / password123, ada@hrbots.test / password123");
+            System.out.println("[seed] created demo employees: admin@hrbots.test, ada@hrbots.test");
         }
 
         if (faqRepository.count() == 0) {
