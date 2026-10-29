@@ -15,15 +15,19 @@ export default function Policy() {
     const res = await api.askPolicy(question); // { answer, matches: [{ docTitle, heading, ... }] }
     const sources = (res.matches || []).map((m) => `${m.docTitle} → ${m.heading}`);
     return {
-      answer: res.answer,
-      detail: sources.length ? `Source: ${sources.join('; ')}` : null,
+       answer: res.answer,
+      detail: sources.length
+        ? `${res.aiAnswer ? 'Based on' : 'Source'}: ${sources.join('; ')}`
+        : null,
     };
   };
 
   return (
     <>
-      <h1>Policy assistant</h1>
-      <p className="muted">Ask about company policies. Answers come from the policy documents HR has added.</p>
+      <h1>Policy Assistant</h1>
+      <p className="muted">
+        Ask about company policies. Answers come from the policy documents HR has added.
+        </p>
       <ErrorBox error={error} />
 
       <ChatBox

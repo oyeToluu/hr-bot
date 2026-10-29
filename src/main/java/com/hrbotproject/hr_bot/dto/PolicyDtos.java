@@ -10,5 +10,4 @@ public class PolicyDtos {
 
     public record MatchResult(int score, String docTitle, String heading, String content) {}
 
-    public record AskResponse(String answer, List<MatchResult> matches) {}
-}
+public record AskResponse(String answer, List<MatchResult> matches, boolean aiAnswer) {}}
