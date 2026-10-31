@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ErrorBox } from '../../components/ui';
+  import PasswordInput from '../../components/PasswordInput';
 
 export default function CandidateLogin() {
   const { candidate, candidateLogin } = useAuth();
@@ -40,8 +41,10 @@ export default function CandidateLogin() {
       </label>
       <label>
         Password
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      </label>
+          <PasswordInput 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} required />  
+              </label>
       <button type="submit" disabled={busy}>
         {busy ? 'Logging in…' : 'Log in'}
       </button>

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ErrorBox } from '../components/ui';
+import AiHrHero from '../components/AiHrHero';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Login() {
   const { login } = useAuth();
@@ -23,10 +25,23 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page landing">
+      <section className="landing-hero">
+        <p className="brand-mark">
+          <span className="brand-dot" aria-hidden="true" />
+          HR Bots
+        </p>
+        <h1 className="display">Ask HR anything. Get your answer in seconds.</h1>
+        <p className="lede">
+          Your leave balance, company policies and first-week questions, answered by an AI
+          assistant that knows your workplace.
+        </p>
+        <AiHrHero size="lg" />
+      </section>
+
       <form className="card auth-card" onSubmit={submit}>
-        <h1>HR Bots</h1>
-        <p className="muted">AI for Business &amp; Productivity. Log in to continue.</p>
+        <h2 className="display">Log in</h2>
+        <p className="muted">Use your work email to continue.</p>
         <ErrorBox error={error} />
         <label>
           Email
@@ -34,8 +49,7 @@ export default function Login() {
         </label>
         <label>
           Password
-          <input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -49,10 +63,6 @@ export default function Login() {
         </p>
         <p className="muted small">
           Looking for a job? <Link to="/careers">See open positions</Link>
-        </p>
-        <p className="muted small demo-hint">
-          Demo accounts (from DemoDataSeeder): admin@hrbots.test and ada@hrbots.test, password
-          password123
         </p>
       </form>
     </div>

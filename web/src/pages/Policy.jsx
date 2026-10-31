@@ -12,10 +12,11 @@ export default function Policy() {
   }, []);
 
   const ask = async (question) => {
-    const res = await api.askPolicy(question); // { answer, matches: [{ docTitle, heading, ... }] }
+    // { answer, matches: [{ docTitle, heading, ... }], aiAnswer }
+    const res = await api.askPolicy(question);
     const sources = (res.matches || []).map((m) => `${m.docTitle} → ${m.heading}`);
     return {
-       answer: res.answer,
+      answer: res.answer,
       detail: sources.length
         ? `${res.aiAnswer ? 'Based on' : 'Source'}: ${sources.join('; ')}`
         : null,
@@ -24,19 +25,22 @@ export default function Policy() {
 
   return (
     <>
-      <h1>Policy Assistant</h1>
+      <h1>HR Assistant</h1>
       <p className="muted">
-        Ask about company policies. Answers come from the policy documents HR has added.
-        </p>
+        Ask about company policies or your own HR details, like your leave balance or leave
+        requests. Answers come from HR's policy documents and your own record, and show where
+        they came from.
+      </p>
       <ErrorBox error={error} />
 
       <ChatBox
-        greeting="Hi! Ask me about leave, remote work, conduct, or any other company policy."
-        placeholder="e.g. How many sick days do I get?"
+        greeting="Hi! Ask me about company policy or your own HR details, like how many leave days you have left."
+        placeholder="e.g. Has my leave request been approved?"
         suggestions={[
-          'How many annual leave days do I get?',
+          'How many leave days do I have left?',
+          'Has my leave been approved?',
           'Can I work from home?',
-          'What is the code of conduct?',
+          'How many sick days do I get?',
         ]}
         ask={ask}
       />

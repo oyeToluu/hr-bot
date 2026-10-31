@@ -22,8 +22,11 @@ public class PolicyController {
     private final PolicyService policyService;
 
     @PostMapping("/ask")
-    public AskResponse ask(@Valid @RequestBody AskRequest req) {
-        return policyService.ask(req.question());
+    public AskResponse ask(
+            @AuthenticationPrincipal EmployeePrincipal principal,
+            @Valid @RequestBody AskRequest req
+    ) {
+        return policyService.ask(req.question(), principal == null ? null : principal.getEmployee());
     }
 
     @GetMapping("/documents")

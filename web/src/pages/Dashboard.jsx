@@ -2,23 +2,53 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { ErrorBox, Loading, StatusBadge, formatDate, label } from '../components/ui';
+import AiHrHero from '../components/AiHrHero';
+import { DueChip } from '../components/DueChip';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [todos, setTodos] = useState([]);
 
   useEffect(() => {
     api.myDashboard().then(setData).catch((e) => setError(e.message));
+    // The task card is a bonus: if it fails to load, the rest of the dashboard still shows
+    api.myTodos().then(setTodos).catch(() => setTodos([]));
   }, []);
+
+  // Tick a task off right from the dashboard
+  const completeTodo = async (todo) => {
+    setTodos((list) => list.map((t) => (t.id === todo.id ? { ...t, done: true } : t)));
+    try {
+      await api.updateTodo(todo.id, { done: true });
+    } catch {
+      setTodos((list) => list.map((t) => (t.id === todo.id ? { ...t, done: false } : t)));
+    }
+  };
 
   if (error) return <ErrorBox error={error} />;
   if (!data) return <Loading />;
 
   const { profile, recentLeaveRequests, pendingCount } = data;
+  const openTodos = todos.filter((t) => !t.done);
 
   return (
     <>
-      <h1>Welcome, {profile.fullName.split(' ')[0]}</h1>
+      <section className="welcome-banner">
+        <div className="welcome-text">
+          <h1 className="display">Welcome back, {profile.fullName.split(' ')[0]}</h1>
+          <p>
+            You have <strong>{profile.leaveBalance} leave days</strong> left
+            {pendingCount > 0
+              ? ` and ${pendingCount} request${pendingCount === 1 ? '' : 's'} waiting for HR.`
+              : ' and nothing waiting for HR.'}
+          </p>
+          <Link className="button" to="/policy">
+            Ask the HR assistant
+          </Link>
+        </div>
+        <AiHrHero size="sm" />
+      </section>
 
       <div className="stats">
         <div className="stat">
@@ -46,6 +76,37 @@ export default function Dashboard() {
           </Link>
         </div>
       )}
+
+      <div className="card">
+        <div className="card-head">
+          <h2>My tasks</h2>
+          <Link to="/todos">{openTodos.length > 3 ? `See all ${openTodos.length}` : 'Open my tasks'}</Link>
+        </div>
+        {openTodos.length === 0 ? (
+          <p className="muted">You're all caught up.</p>
+        ) : (
+          <ul className="todo-list">
+            {openTodos.slice(0, 3).map((t) => (
+              <li key={t.id} className="todo-row">
+                <input
+                  type="checkbox"
+                  className="todo-check"
+                  checked={false}
+                  onChange={() => completeTodo(t)}
+                  aria-label={`Mark "${t.title}" as done`}
+                />
+                <div className="todo-body">
+                  <span className="todo-title">{t.title}</span>
+                  <div className="todo-meta">
+                    <DueChip date={t.dueDate} />
+                    {t.assignedByHr && <span className="todo-from">From {t.assignedByName || 'HR'}</span>}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="card">
         <h2>My profile</h2>

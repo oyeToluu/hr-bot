@@ -38,7 +38,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     public void run(String... args) {
         if (employeeRepository.count() == 0) {
             employeeRepository.save(Employee.builder()
-                    .fullName("Toni HR Admin")
+                    .fullName("Tolulope HR Admin")
                     .email("admin@hrbots.test")
                     .password(passwordEncoder.encode(adminPassword))
                     .department("Human Resources")

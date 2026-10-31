@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ErrorBox } from '../components/ui';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Register() {
   const { register } = useAuth();
@@ -43,9 +44,8 @@ export default function Register() {
           {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
         </label>
         <label>
-          Password
-          <input
-            type="password"
+          Password 
+           <PasswordInput
             value={form.password}
             onChange={update('password')}
             minLength={6}

@@ -9,6 +9,10 @@ import Dashboard from './pages/Dashboard';
 import Leave from './pages/Leave';
 import Onboarding from './pages/Onboarding';
 import Policy from './pages/Policy';
+import Todos from './pages/Todos';
+import AdminTasks from './pages/admin/AdminTasks';
+import Calendar from './pages/Calendar';
+import Settings from './pages/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLeave from './pages/admin/AdminLeave';
 import AdminEmployees from './pages/admin/AdminEmployees';
@@ -30,7 +34,7 @@ export default function App() {
   // Where "/" and unknown URLs go, for whoever is logged in
   const landing = employee ? home : candidate ? '/careers/applications' : '/login';
 
-  return (
+   return (
     <Routes>
       <Route path="/login" element={employee ? <Navigate to={home} replace /> : <Login />} />
       <Route path="/register" element={employee ? <Navigate to={home} replace /> : <Register />} />
@@ -40,11 +44,15 @@ export default function App() {
         <Route path="/leave" element={<Leave />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/policy" element={<Policy />} />
+        <Route path="/todos" element={<Todos />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/settings" element={<Settings />} />
 
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/leave" element={<RequireAdmin><AdminLeave /></RequireAdmin>} />
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployees /></RequireAdmin>} />
         <Route path="/admin/content" element={<RequireAdmin><AdminContent /></RequireAdmin>} />
+        <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
         <Route path="/admin/recruitment" element={<RequireAdmin><AdminRecruitment /></RequireAdmin>} />
         <Route path="/admin/recruitment/:jobId" element={<RequireAdmin><AdminApplicants /></RequireAdmin>} />
       </Route>

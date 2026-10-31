@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ErrorBox } from '../../components/ui';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function CandidateRegister() {
   const { candidate, candidateRegister } = useAuth();
@@ -50,8 +51,7 @@ export default function CandidateRegister() {
       </label>
       <label>
         Password
-        <input type="password" value={form.password} onChange={update('password')} minLength={6} required />
-        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+          <PasswordInput value={form.password} onChange={update('password')} minLength={6} required />        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
       </label>
       <label>
         Phone <span className="muted">(optional)</span>

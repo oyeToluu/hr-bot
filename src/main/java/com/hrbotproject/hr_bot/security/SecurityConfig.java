@@ -76,6 +76,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/candidates/**").hasRole("CANDIDATE")
 
                         .requestMatchers("/api/employees/**").hasRole("HR_ADMIN")
+                        .requestMatchers("/api/todos/assign", "/api/todos/employee/**").hasRole("HR_ADMIN")
                         .requestMatchers("/api/dashboard/admin").hasRole("HR_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/leave").hasRole("HR_ADMIN")
                         .requestMatchers("/api/leave/*/decision").hasRole("HR_ADMIN")

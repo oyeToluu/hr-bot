@@ -93,6 +93,7 @@ const get = (path) => request('GET', path);
 const post = (path, body) => request('POST', path, body);
 const patch = (path, body) => request('PATCH', path, body);
 const put = (path, body) => request('PUT', path, body);
+const del = (path) => request('DELETE', path);
 
 // Downloads a file (e.g. a candidate's CV) with the login token attached,
 // then hands it to the browser as a normal download.
@@ -147,16 +148,32 @@ export const api = {
   // EmployeeController (HR admin only)
   listEmployees: () => get('/api/employees'),
 
+  // SettingsController: my alerts, tune and Islamic features
+  mySettings: () => get('/api/settings/me'),
+  saveSettings: (changes) => put('/api/settings/me', changes),
+
+  // TodoController: each employee's own to-do list
+  myTodos: () => get('/api/todos'),
+  createTodo: (title, dueDate) => post('/api/todos', { title, dueDate }),
+  updateTodo: (id, changes) => patch(`/api/todos/${id}`, changes),
+  deleteTodo: (id) => del(`/api/todos/${id}`),
+  // TodoController (HR admin only)
+  assignTodo: (employeeId, title, dueDate, notes) =>
+    post('/api/todos/assign', { employeeId, title, dueDate, notes }),
+  employeeTodos: (employeeId) => get(`/api/todos/employee/${employeeId}`),
+
+
   // CandidateController (job applicants)
   candidateRegister: (fullName, email, password, phone) =>
-    post('/api/candidates/register', { fullName, email, password, phone }),
+  post('/api/candidates/register', { fullName, email, password, phone }),
   candidateLogin: (email, password) => post('/api/candidates/login', { email, password }),
   candidateMe: () => get('/api/candidates/me'),
 
-  // JobController: public job board + candidate applying
-  openJobs: () => get('/api/jobs'),
-  openJob: (id) => get(`/api/jobs/${id}`),
-  applyForJob: (id, file, coverNote) => {
+    // JobController: public job board + candidate applying
+    openJobs: () => get('/api/jobs'),
+    openJob: (id) => get(`/api/jobs/${id}`),
+
+    applyForJob: (id, file, coverNote) => {
     const form = new FormData();
     form.append('cv', file);
     if (coverNote) form.append('coverNote', coverNote);
