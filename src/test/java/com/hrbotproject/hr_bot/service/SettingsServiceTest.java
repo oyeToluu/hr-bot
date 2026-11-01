@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +34,7 @@ class SettingsServiceTest {
     @Test
     @DisplayName("mine() gives sensible defaults without saving anything")
     void mine_defaults() {
-        when(repository.findByEmployeeId("ada")).thenReturn(Optional.empty());
+        when(repository.findAllByEmployeeId("ada")).thenReturn(List.of());
 
         UserSettings s = settingsService.mine("ada");
 
@@ -51,7 +51,7 @@ class SettingsServiceTest {
     void update_onlyChangesSentFields() {
         UserSettings saved = UserSettings.defaultsFor("ada");
         saved.setTone("gold-bell");
-        when(repository.findByEmployeeId("ada")).thenReturn(Optional.of(saved));
+        when(repository.findAllByEmployeeId("ada")).thenReturn(List.of(saved));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UserSettings s = settingsService.update("ada",
@@ -62,5 +62,27 @@ class SettingsServiceTest {
         assertThat(s.getVolume()).isEqualTo(40);
         assertThat(s.getTone()).isEqualTo("gold-bell");   // not sent, so unchanged
         assertThat(s.getAsrMethod()).isEqualTo("STANDARD");
+        assertThat(s.getId()).isEqualTo("ada");            // one document per employee
+    }
+
+    @Test
+    @DisplayName("update() repairs duplicate settings left by quick double saves")
+    void update_tidiesDuplicates() {
+        UserSettings copy1 = UserSettings.defaultsFor("ada");
+        copy1.setId("random-1");
+        copy1.setTone("marimba");
+        UserSettings copy2 = UserSettings.defaultsFor("ada");
+        copy2.setId("random-2");
+        when(repository.findAllByEmployeeId("ada")).thenReturn(List.of(copy1, copy2));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UserSettings s = settingsService.update("ada",
+                new UpdateSettingsRequest(false, null, null, null, null, null, null, null, null));
+
+        assertThat(s.getId()).isEqualTo("ada");
+        assertThat(s.getTone()).isEqualTo("marimba");     // kept what was saved before
+        assertThat(s.isIslamicFeatures()).isFalse();
+        verify(repository).deleteById("random-1");
+        verify(repository).deleteById("random-2");
     }
 }

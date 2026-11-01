@@ -67,8 +67,12 @@ async function request(method, path, body) {
       onUnauthorized();
     }
     // GlobalExceptionHandler returns { status, message, fieldErrors? }
-    const message = (data && data.message) || defaultMessage(response.status);
-    throw new ApiError(response.status, message, data && data.fieldErrors);
+    const message =
+      response.status >= 500
+        ? defaultMessage(response.status)
+        : (data && data.message) || defaultMessage(response.status);
+            throw new ApiError(response.status, message, data && data.fieldErrors);
+
   }
   return data;
 }
@@ -86,7 +90,8 @@ function defaultMessage(status) {
   if (status === 403) return 'You do not have permission to do that.';
   if (status === 404) return 'Not found.';
   if (status === 413) return 'File is too large (max 5 MB).';
-  return `Request failed (${status}).`;
+  if (status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
+  return 'Something went wrong. Please try again.';
 }
 
 const get = (path) => request('GET', path);

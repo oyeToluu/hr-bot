@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { api } from '../api/client';
 
 // Used until the saved settings arrive (and if the server can't be reached)
@@ -19,6 +19,7 @@ const SettingsContext = createContext(null);
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
+   const queue = useRef(Promise.resolve());
 
   useEffect(() => {
     api
@@ -28,13 +29,29 @@ export function SettingsProvider({ children }) {
       .finally(() => setLoaded(true));
   }, []);
 
-  // Changes show straight away, then get saved. Returns the saved settings.
-  const save = async (changes) => {
-    setSettings((s) => ({ ...s, ...changes }));
-    const saved = await api.saveSettings(changes);
-    setSettings({ ...DEFAULT_SETTINGS, ...saved });
-    return saved;
-  };
+  const save = (changes) => {
+    let before;
+    setSettings((s) => {
+      before = s;
+      return { ...s, ...changes };
+    });
+    const run = queue.current.then(async () => {
+      try {
+        // The change is already showing, so nothing more to do on success
+        return await api.saveSettings(changes);
+      } catch (err) {
+        // Put back only the fields this change touched
+        setSettings((s) => {
+          const undo = { ...s };
+          for (const key of Object.keys(changes)) undo[key] = before[key];
+          return undo;
+        });
+        throw err;
+      }
+    });
+    queue.current = run.catch(() => {});
+    return run;
+};
 
   return (
     <SettingsContext.Provider value={{ settings, loaded, save }}>

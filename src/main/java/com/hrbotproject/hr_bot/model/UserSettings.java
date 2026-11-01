@@ -40,6 +40,7 @@ public class UserSettings {
 
     public static UserSettings defaultsFor(String employeeId) {
         UserSettings s = new UserSettings();
+        s.setId(employeeId);
         s.setEmployeeId(employeeId);
         return s;
     }
