@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,11 @@ import PasswordInput from '../components/PasswordInput';
 import PasswordRules, { passwordOk } from '../components/PasswordRules';
 
 /**
- * Forgot password, in three steps: email -> code + new password -> done.
+ * Forgot password, step by step:
+ *   1. email  -> we email a 6-digit code
+ *   2. code   -> the code is checked first
+ *   3. new password (only shown once the code is confirmed)
+ *   4. done
  * Used for staff (/forgot-password) and job applicants (/careers/forgot-password).
  */
 export default function ForgotPassword({ loginPath = '/login', careers = false }) {
@@ -19,7 +23,15 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState(0); // seconds until "Send a new code" is allowed
 
+  useEffect(() => {
+    if (wait <= 0) return undefined;
+    const t = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  // Step 1: send the code
   const sendCode = async (e) => {
     e?.preventDefault();
     setError('');
@@ -27,7 +39,9 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
     try {
       const res = await api.forgotPassword(email);
       setNote(res.message);
-      setStep('reset');
+      setCode('');
+      setWait(60);
+      setStep('code');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -35,7 +49,23 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
     }
   };
 
-  const reset = async (e) => {
+  // Step 2: check the code before asking for a new password
+  const checkCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await api.checkResetCode(email, code);
+      setStep('password');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Step 3: save the new password
+  const savePassword = async (e) => {
     e.preventDefault();
     setError('');
     if (!passwordOk(password)) {
@@ -48,6 +78,8 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
       setStep('done');
     } catch (err) {
       setError(err.fieldErrors?.newPassword || err.message);
+      // If the code expired in the meantime, go back to ask for a new one
+      if (/expired|Too many/i.test(err.message)) setStep('code');
     } finally {
       setBusy(false);
     }
@@ -73,10 +105,13 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
         </form>
       )}
 
-      {step === 'reset' && (
-        <form onSubmit={reset}>
-          <h1>Choose a new password</h1>
+      {step === 'code' && (
+        <form onSubmit={checkCode}>
+          <h1>Enter your code</h1>
           <div className="success-box">{note}</div>
+          <p className="muted small">
+            We sent it to <strong>{email}</strong>. It expires in 10 minutes.
+          </p>
           <ErrorBox error={error} />
           <label>
             6-digit code
@@ -91,21 +126,40 @@ export default function ForgotPassword({ loginPath = '/login', careers = false }
               autoFocus
             />
           </label>
-          <label>
-            New password
-            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </label>
-          <PasswordRules password={password} />
           <button type="submit" disabled={busy || code.length !== 6}>
-            {busy ? 'Saving…' : 'Save new password'}
+            {busy ? 'Checking…' : 'Continue'}
           </button>
           <p className="muted small">
-            No email? Check spam, or{' '}
-            <button type="button" className="link-btn" onClick={() => setStep('email')}>
-              try again
-            </button>
-            .
+            Didn't get it? Check your spam folder.{' '}
+            {wait > 0 ? (
+              <span>You can ask for a new code in {wait}s.</span>
+            ) : (
+              <button type="button" className="link-btn" onClick={() => sendCode()}>
+                Send a new code
+              </button>
+            )}
           </p>
+          <p className="muted small">
+            <button type="button" className="link-btn" onClick={() => setStep('email')}>
+              ← Use a different email
+            </button>
+          </p>
+        </form>
+      )}
+
+      {step === 'password' && (
+        <form onSubmit={savePassword}>
+          <h1>Choose a new password</h1>
+          <div className="success-box">Code confirmed ✓</div>
+          <ErrorBox error={error} />
+          <label>
+            New password
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+          </label>
+          <PasswordRules password={password} />
+          <button type="submit" disabled={busy}>
+            {busy ? 'Saving…' : 'Save new password'}
+          </button>
         </form>
       )}
 

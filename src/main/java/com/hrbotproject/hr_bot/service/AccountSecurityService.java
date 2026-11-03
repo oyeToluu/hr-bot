@@ -253,8 +253,16 @@ public class AccountSecurityService {
         }
         return new MessageResponse(SENT_IF_EXISTS);
     }
+    
+        /** Step 2 of "Forgot password": confirms the code before the new-password box is shown. */
+    public MessageResponse checkResetCode(String rawEmail, String code) {
+        codes.check(normalize(rawEmail), Purpose.RESET, code);
+        return new MessageResponse("Code confirmed. Now choose your new password.");
+    }
+
 
     /** Checks the reset code and saves the new password. This browser is then trusted. */
+
     public AuthResult resetPassword(String rawEmail, String code, String newPassword) {
         String email = normalize(rawEmail);
         codes.verify(email, Purpose.RESET, code);

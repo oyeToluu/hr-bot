@@ -153,6 +153,7 @@ export const api = {
   verifyCode: (email, purpose, code) => post('/api/auth/verify-code', { email, purpose, code }),
   resendCode: (email, purpose) => post('/api/auth/resend-code', { email, purpose }),
   forgotPassword: (email) => post('/api/auth/forgot-password', { email }),
+  checkResetCode: (email, code) => post('/api/auth/check-reset-code', { email, code }),
   resetPassword: (email, code, newPassword) =>
     post('/api/auth/reset-password', { email, code, newPassword }),
 

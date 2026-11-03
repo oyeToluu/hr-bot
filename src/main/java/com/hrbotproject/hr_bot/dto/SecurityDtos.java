@@ -45,8 +45,14 @@ public class SecurityDtos {
             @NotBlank @Email String email,
             @NotNull EmailCode.Purpose purpose
     ) {}
+        public record ForgotPasswordRequest(
+            @NotBlank @Email String email) 
+            {}
 
-    public record ForgotPasswordRequest(@NotBlank @Email String email) {}
+        public record CheckResetCodeRequest(
+            @NotBlank @Email String email,
+            @NotBlank @Pattern(regexp = "\\s*\\d{6}\\s*", message = "the code is 6 digits") String code
+    ) {}
 
     public record ResetPasswordRequest(
             @NotBlank @Email String email,

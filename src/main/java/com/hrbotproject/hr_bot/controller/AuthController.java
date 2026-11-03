@@ -3,6 +3,7 @@ package com.hrbotproject.hr_bot.controller;
 import com.hrbotproject.hr_bot.dto.AuthDtos.LoginRequest;
 import com.hrbotproject.hr_bot.dto.AuthDtos.RegisterRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.AuthResult;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.CheckResetCodeRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.ForgotPasswordRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.MessageResponse;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.ResendCodeRequest;
@@ -54,6 +55,11 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public MessageResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         return accounts.forgotPassword(req.email());
+    }
+
+    @PostMapping("/check-reset-code")
+    public MessageResponse checkResetCode(@Valid @RequestBody CheckResetCodeRequest req) {
+        return accounts.checkResetCode(req.email(), req.code());
     }
 
     @PostMapping("/reset-password")

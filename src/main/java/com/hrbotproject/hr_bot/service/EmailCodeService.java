@@ -79,9 +79,17 @@ public class EmailCodeService {
                         && clock.instant().isBefore(c.getLastSentAt().plus(RESEND_WINDOW)))
                 .orElse(false);
     }
-
-    /** Checks a code. Throws a friendly message if it's wrong, expired or out of tries. */
+    /** Checks a code and uses it up. Throws a friendly message if it's wrong, expired or out of tries. */
     public void verify(String email, Purpose purpose, String code) {
+        check(email, purpose, code);
+        repository.deleteById(EmailCode.idFor(email, purpose)); // a code works only once
+    }
+
+    /**
+     * Checks a code WITHOUT using it up (wrong guesses still count towards the 5 tries).
+     * Used by "Forgot password" to confirm the code before showing the new-password box.
+     */
+    public void check(String email, Purpose purpose, String code) {
         String id = EmailCode.idFor(email, purpose);
         EmailCode c = repository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("That code has expired. Please ask for a new one."));
@@ -107,7 +115,6 @@ public class EmailCodeService {
             throw new IllegalArgumentException(
                     "That code isn't right. You have " + left + (left == 1 ? " try" : " tries") + " left.");
         }
-        repository.deleteById(id); // a code works only once
     }
 
     static String hash(String email, Purpose purpose, String code) {
