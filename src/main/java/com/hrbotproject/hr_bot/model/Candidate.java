@@ -43,6 +43,7 @@ public class Candidate {
     @NotBlank
     @JsonIgnore
     private String password;
+    private Boolean emailVerified;
 
     @CreatedDate
     private LocalDateTime createdAt;

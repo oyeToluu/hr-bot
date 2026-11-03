@@ -3,14 +3,14 @@ package com.hrbotproject.hr_bot.dto;
 import com.hrbotproject.hr_bot.model.Employee;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public class AuthDtos {
 
     public record RegisterRequest(
             @NotBlank String fullName,
             @NotBlank @Email String email,
-            @NotBlank @Size(min = 6, message = "password must be at least 6 characters") String password,
+            @NotBlank @Pattern(regexp = SecurityDtos.PASSWORD_RULE, message = SecurityDtos.PASSWORD_HINT) String password,
             String department
             // No "role" field here on purpose: self-registration should never
             // be able to grant itself HR_ADMIN. HR admin accounts are seeded
@@ -19,7 +19,8 @@ public class AuthDtos {
 
     public record LoginRequest(
             @NotBlank @Email String email,
-            @NotBlank String password
+            @NotBlank String password,
+            String deviceToken // proves this browser entered a code recently (optional)
     ) {}
 
     public record AuthResponse(String token, Employee employee) {}

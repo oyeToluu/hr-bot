@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ErrorBox } from '../components/ui';
 import PasswordInput from '../components/PasswordInput';
+import PasswordRules, { passwordOk } from '../components/PasswordRules';
+import CodeStep from '../components/CodeStep';
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, verifyCode } = useAuth();
   const [form, setForm] = useState({ fullName: '', email: '', password: '', department: '' });
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(null); // { email, purpose } while waiting for the code
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -17,9 +20,17 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setFieldErrors({});
+    if (!passwordOk(form.password)) {
+      setFieldErrors({ password: 'Please meet all the password rules below.' });
+      return;
+    }
     setBusy(true);
     try {
-      await register(form.fullName, form.email, form.password, form.department || null);
+      const result = await register(form.fullName, form.email, form.password, form.department || null);
+      if (result.status === 'CODE_SENT') {
+        setPending({ email: result.email, purpose: result.purpose });
+        setBusy(false);
+      }
     } catch (err) {
       setError(err.message);
       setFieldErrors(err.fieldErrors || {});
@@ -29,41 +40,48 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <form className="card auth-card" onSubmit={submit}>
-        <h1>Create your account</h1>
-        <p className="muted">New accounts are employee accounts. HR admin access is set by HR.</p>
-        <ErrorBox error={error} />
-        <label>
-          Full name
-          <input value={form.fullName} onChange={update('fullName')} required />
-          {fieldErrors.fullName && <span className="field-error">{fieldErrors.fullName}</span>}
-        </label>
-        <label>
-          Email
-          <input type="email" value={form.email} onChange={update('email')} required />
-          {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
-        </label>
-        <label>
-          Password 
-           <PasswordInput
-            value={form.password}
-            onChange={update('password')}
-            minLength={6}
-            required
+      <div className="card auth-card">
+        {pending ? (
+          <CodeStep
+            email={pending.email}
+            purpose={pending.purpose}
+            onVerify={(code) => verifyCode(pending.email, pending.purpose, code)}
+            onBack={() => setPending(null)}
           />
-          {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
-        </label>
-        <label>
-          Department <span className="muted">(optional)</span>
-          <input value={form.department} onChange={update('department')} />
-        </label>
-        <button type="submit" disabled={busy}>
-          {busy ? 'Creating account…' : 'Create account'}
-        </button>
-        <p className="muted small">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
-      </form>
+        ) : (
+          <form onSubmit={submit}>
+            <h1>Create your account</h1>
+            <p className="muted">New accounts are employee accounts. HR admin access is set by HR.</p>
+            <ErrorBox error={error} />
+            <label>
+              Full name
+              <input value={form.fullName} onChange={update('fullName')} required />
+              {fieldErrors.fullName && <span className="field-error">{fieldErrors.fullName}</span>}
+            </label>
+            <label>
+              Email
+              <input type="email" value={form.email} onChange={update('email')} required />
+              {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+            </label>
+            <label>
+              Password
+              <PasswordInput value={form.password} onChange={update('password')} required />
+              {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+            </label>
+            <PasswordRules password={form.password} />
+            <label>
+              Department <span className="muted">(optional)</span>
+              <input value={form.department} onChange={update('department')} />
+            </label>
+            <button type="submit" disabled={busy}>
+              {busy ? 'Creating account…' : 'Create account'}
+            </button>
+            <p className="muted small">
+              Already have an account? <Link to="/login">Log in</Link>
+            </p>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

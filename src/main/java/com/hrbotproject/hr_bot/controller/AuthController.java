@@ -1,68 +1,64 @@
 package com.hrbotproject.hr_bot.controller;
 
-import com.hrbotproject.hr_bot.dto.AuthDtos.AuthResponse;
 import com.hrbotproject.hr_bot.dto.AuthDtos.LoginRequest;
 import com.hrbotproject.hr_bot.dto.AuthDtos.RegisterRequest;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.AuthResult;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.ForgotPasswordRequest;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.MessageResponse;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.ResendCodeRequest;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.ResetPasswordRequest;
+import com.hrbotproject.hr_bot.dto.SecurityDtos.VerifyCodeRequest;
 import com.hrbotproject.hr_bot.model.Employee;
-import com.hrbotproject.hr_bot.repository.EmployeeRepository;
 import com.hrbotproject.hr_bot.security.EmployeePrincipal;
-import com.hrbotproject.hr_bot.security.JwtService;
+import com.hrbotproject.hr_bot.service.AccountSecurityService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.NoSuchElementException;
-
+/**
+ * Staff sign-up and login, plus the emailed-code steps shared by staff and
+ * job applicants (verify code, resend code, forgot / reset password).
+ */
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final EmployeeRepository employeeRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private final AccountSecurityService accounts;
+
+    public AuthController(AccountSecurityService accounts) {
+        this.accounts = accounts;
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {
-        if (employeeRepository.existsByEmail(req.email())) {
-            throw new IllegalArgumentException("An account with this email already exists");
-        }
-
-        Employee employee = Employee.builder()
-                .fullName(req.fullName())
-                .email(req.email())
-                .password(passwordEncoder.encode(req.password()))
-                .department(req.department() == null ? "Unassigned" : req.department())
-                .role(Employee.Role.EMPLOYEE) // always EMPLOYEE on self-registration
-                .build();
-        employeeRepository.save(employee);
-
-        String token = jwtService.generateToken(new EmployeePrincipal(employee));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(token, employee));
+    public ResponseEntity<AuthResult> register(@Valid @RequestBody RegisterRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(accounts.registerEmployee(req));
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest req) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.email(), req.password()));
-        } catch (org.springframework.security.core.AuthenticationException e) {
-            throw new BadCredentialsException("Invalid email or password");
-        }
+    public AuthResult login(@Valid @RequestBody LoginRequest req) {
+        return accounts.loginEmployee(req);
+    }
 
-        Employee employee = employeeRepository.findByEmail(req.email())
-                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
+    @PostMapping("/verify-code")
+    public AuthResult verifyCode(@Valid @RequestBody VerifyCodeRequest req) {
+        return accounts.verifyCode(req.email(), req.purpose(), req.code());
+    }
 
-        String token = jwtService.generateToken(new EmployeePrincipal(employee));
-        return new AuthResponse(token, employee);
+    @PostMapping("/resend-code")
+    public MessageResponse resendCode(@Valid @RequestBody ResendCodeRequest req) {
+        return accounts.resendCode(req.email(), req.purpose());
+    }
+
+    @PostMapping("/forgot-password")
+    public MessageResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        return accounts.forgotPassword(req.email());
+    }
+
+    @PostMapping("/reset-password")
+    public AuthResult resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        return accounts.resetPassword(req.email(), req.code(), req.newPassword());
     }
 
     @GetMapping("/me")

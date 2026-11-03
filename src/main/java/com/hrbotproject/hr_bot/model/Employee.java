@@ -57,4 +57,7 @@ public class Employee {
 
     @CreatedDate
     private LocalDateTime createdAt;
+
+    
+    private Boolean emailVerified;
 }

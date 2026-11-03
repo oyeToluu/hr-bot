@@ -4,8 +4,29 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'hrbots_token';
-// "staff" or "candidate": which /me endpoint to call when the app reloads
 const KIND_KEY = 'hrbots_kind';
+
+// "Remember this device": after someone enters an emailed code, the server
+// gives this browser a device token, so the next login here skips the code.
+const DEVICES_KEY = 'hrbots_devices';
+export const deviceStore = {
+  get: (email) => {
+    try {
+      return JSON.parse(localStorage.getItem(DEVICES_KEY) || '{}')[(email || '').trim().toLowerCase()] || null;
+    } catch {
+      return null;
+    }
+  },
+  set: (email, token) => {
+    try {
+      const all = JSON.parse(localStorage.getItem(DEVICES_KEY) || '{}');
+      all[(email || '').trim().toLowerCase()] = token;
+      localStorage.setItem(DEVICES_KEY, JSON.stringify(all));
+    } catch {
+      // storage blocked: this browser will just be asked for a code next time
+    }
+  },
+};
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -66,13 +87,13 @@ async function request(method, path, body) {
     if (response.status === 401 && !isLoginCall(path)) {
       onUnauthorized();
     }
-    // GlobalExceptionHandler returns { status, message, fieldErrors? }
+    // GlobalExceptionHandler returns { status, message, fieldErrors? }.
+    // Server errors (500 and up) get a friendly message instead of technical details.
     const message =
       response.status >= 500
         ? defaultMessage(response.status)
         : (data && data.message) || defaultMessage(response.status);
-            throw new ApiError(response.status, message, data && data.fieldErrors);
-
+    throw new ApiError(response.status, message, data && data.fieldErrors);
   }
   return data;
 }
@@ -122,10 +143,18 @@ async function download(path, fallbackName) {
 
 export const api = {
   // AuthController
-  login: (email, password) => post('/api/auth/login', { email, password }),
+  login: (email, password) =>
+    post('/api/auth/login', { email, password, deviceToken: deviceStore.get(email) }),
   register: (fullName, email, password, department) =>
     post('/api/auth/register', { fullName, email, password, department }),
   me: () => get('/api/auth/me'),
+
+  // Emailed codes (staff and job applicants)
+  verifyCode: (email, purpose, code) => post('/api/auth/verify-code', { email, purpose, code }),
+  resendCode: (email, purpose) => post('/api/auth/resend-code', { email, purpose }),
+  forgotPassword: (email) => post('/api/auth/forgot-password', { email }),
+  resetPassword: (email, code, newPassword) =>
+    post('/api/auth/reset-password', { email, code, newPassword }),
 
   // DashboardController
   myDashboard: () => get('/api/dashboard/me'),
@@ -167,18 +196,17 @@ export const api = {
     post('/api/todos/assign', { employeeId, title, dueDate, notes }),
   employeeTodos: (employeeId) => get(`/api/todos/employee/${employeeId}`),
 
-
   // CandidateController (job applicants)
   candidateRegister: (fullName, email, password, phone) =>
-  post('/api/candidates/register', { fullName, email, password, phone }),
-  candidateLogin: (email, password) => post('/api/candidates/login', { email, password }),
+    post('/api/candidates/register', { fullName, email, password, phone }),
+  candidateLogin: (email, password) =>
+    post('/api/candidates/login', { email, password, deviceToken: deviceStore.get(email) }),
   candidateMe: () => get('/api/candidates/me'),
 
-    // JobController: public job board + candidate applying
-    openJobs: () => get('/api/jobs'),
-    openJob: (id) => get(`/api/jobs/${id}`),
-
-    applyForJob: (id, file, coverNote) => {
+  // JobController: public job board + candidate applying
+  openJobs: () => get('/api/jobs'),
+  openJob: (id) => get(`/api/jobs/${id}`),
+  applyForJob: (id, file, coverNote) => {
     const form = new FormData();
     form.append('cv', file);
     if (coverNote) form.append('coverNote', coverNote);

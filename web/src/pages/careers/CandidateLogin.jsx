@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ErrorBox } from '../../components/ui';
-  import PasswordInput from '../../components/PasswordInput';
+import PasswordInput from '../../components/PasswordInput';
+import CodeStep from '../../components/CodeStep';
 
 export default function CandidateLogin() {
-  const { candidate, candidateLogin } = useAuth();
+  const { candidate, candidateLogin, verifyCode } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(null); // { email, purpose } while waiting for a code
 
   // Once logged in (or already logged in), go back to the job they came
   // from, if any.
@@ -23,12 +25,29 @@ export default function CandidateLogin() {
     setError('');
     setBusy(true);
     try {
-      await candidateLogin(email, password);
+      const result = await candidateLogin(email, password);
+      if (result.status === 'CODE_SENT') {
+        setPending({ email: result.email, purpose: result.purpose });
+        setBusy(false);
+      }
     } catch (err) {
       setError(err.message);
       setBusy(false);
     }
   };
+
+  if (pending) {
+    return (
+      <div className="card auth-card careers-auth">
+        <CodeStep
+          email={pending.email}
+          purpose={pending.purpose}
+          onVerify={(code) => verifyCode(pending.email, pending.purpose, code)}
+          onBack={() => setPending(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <form className="card auth-card careers-auth" onSubmit={submit}>
@@ -41,10 +60,11 @@ export default function CandidateLogin() {
       </label>
       <label>
         Password
-          <PasswordInput 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} required />  
-              </label>
+        <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required />
+      </label>
+      <p className="forgot-link small">
+        <Link to="/careers/forgot-password">Forgot password?</Link>
+      </p>
       <button type="submit" disabled={busy}>
         {busy ? 'Logging in…' : 'Log in'}
       </button>

@@ -5,6 +5,7 @@ import CareersLayout from './components/CareersLayout';
 import { RequireAdmin, RequireAuth, RequireCandidate } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Leave from './pages/Leave';
 import Onboarding from './pages/Onboarding';
@@ -38,7 +39,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={employee ? <Navigate to={home} replace /> : <Login />} />
       <Route path="/register" element={employee ? <Navigate to={home} replace /> : <Register />} />
-
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/leave" element={<Leave />} />
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/careers/login" element={<CandidateLogin />} />
         <Route path="/careers/register" element={<CandidateRegister />} />
         <Route path="/careers/applications" element={<RequireCandidate><MyApplications /></RequireCandidate>} />
+        <Route path="/careers/forgot-password" element={<ForgotPassword loginPath="/careers/login" careers />}/>
       </Route>
 
       <Route path="*" element={<Navigate to={landing} replace />} />

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api, setUnauthorizedHandler, tokenStore } from '../api/client';
+import { api, deviceStore, setUnauthorizedHandler, tokenStore } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -7,6 +7,10 @@ const AuthContext = createContext(null);
 //   employee  - staff (EMPLOYEE / HR_ADMIN), logs in at /login
 //   candidate - job applicant, logs in at /careers/login
 // Only one is set at a time.
+//
+// Login, sign-up and code checks all return { status, ... }:
+//   status "OK"        -> logged in ({ token, employee } or { token, candidate })
+//   status "CODE_SENT" -> a 6-digit code was emailed; the page shows the code box
 export function AuthProvider({ children }) {
   const [employee, setEmployee] = useState(null);
   const [candidate, setCandidate] = useState(null);
@@ -33,32 +37,35 @@ export function AuthProvider({ children }) {
     restore.catch(logout).finally(() => setLoading(false));
   }, [logout]);
 
-  // Staff login and register return { token, employee }
-  const saveSession = ({ token, employee: emp }) => {
-    tokenStore.set(token, 'staff');
-    setCandidate(null);
-    setEmployee(emp);
-    return emp;
+  // Remembers this device, and starts a session when the result says "OK"
+  const handle = (result) => {
+    if (result.deviceToken) deviceStore.set(result.email, result.deviceToken);
+    if (result.status === 'OK' && result.employee) {
+      tokenStore.set(result.token, 'staff');
+      setCandidate(null);
+      setEmployee(result.employee);
+    } else if (result.status === 'OK' && result.candidate) {
+      tokenStore.set(result.token, 'candidate');
+      setEmployee(null);
+      setCandidate(result.candidate);
+    }
+    return result;
   };
 
-  // Candidate login and register return { token, candidate }
-  const saveCandidateSession = ({ token, candidate: cand }) => {
-    tokenStore.set(token, 'candidate');
-    setEmployee(null);
-    setCandidate(cand);
-    return cand;
-  };
-
-  const login = async (email, password) => saveSession(await api.login(email, password));
+  const login = async (email, password) => handle(await api.login(email, password));
 
   const register = async (fullName, email, password, department) =>
-    saveSession(await api.register(fullName, email, password, department));
+    handle(await api.register(fullName, email, password, department));
 
-  const candidateLogin = async (email, password) =>
-    saveCandidateSession(await api.candidateLogin(email, password));
+  const candidateLogin = async (email, password) => handle(await api.candidateLogin(email, password));
 
   const candidateRegister = async (fullName, email, password, phone) =>
-    saveCandidateSession(await api.candidateRegister(fullName, email, password, phone));
+    handle(await api.candidateRegister(fullName, email, password, phone));
+
+  const verifyCode = async (email, purpose, code) => handle(await api.verifyCode(email, purpose, code));
+
+  const resetPassword = async (email, code, newPassword) =>
+    handle(await api.resetPassword(email, code, newPassword));
 
   const isAdmin = employee?.role === 'HR_ADMIN';
 
@@ -74,6 +81,8 @@ export function AuthProvider({ children }) {
         register,
         candidateLogin,
         candidateRegister,
+        verifyCode,
+        resetPassword,
         logout,
       }}
     >

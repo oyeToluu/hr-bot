@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -19,13 +20,13 @@ public class RecruitmentDtos {
     public record CandidateRegisterRequest(
             @NotBlank String fullName,
             @NotBlank @Email String email,
-            @NotBlank @Size(min = 6, message = "password must be at least 6 characters") String password,
-            String phone
+            @NotBlank @Pattern(regexp = SecurityDtos.PASSWORD_RULE, message = SecurityDtos.PASSWORD_HINT) String password,            String phone
     ) {}
 
     public record CandidateLoginRequest(
             @NotBlank @Email String email,
-            @NotBlank String password
+            @NotBlank String password,
+             String deviceToken
     ) {}
 
     public record CandidateAuthResponse(String token, Candidate candidate) {}

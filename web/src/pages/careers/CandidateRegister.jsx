@@ -3,14 +3,17 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ErrorBox } from '../../components/ui';
 import PasswordInput from '../../components/PasswordInput';
+import PasswordRules, { passwordOk } from '../../components/PasswordRules';
+import CodeStep from '../../components/CodeStep';
 
 export default function CandidateRegister() {
-  const { candidate, candidateRegister } = useAuth();
+  const { candidate, candidateRegister, verifyCode } = useAuth();
   const location = useLocation();
   const [form, setForm] = useState({ fullName: '', email: '', password: '', phone: '' });
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(null); // { email, purpose } while waiting for the code
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -24,15 +27,36 @@ export default function CandidateRegister() {
     e.preventDefault();
     setError('');
     setFieldErrors({});
+    if (!passwordOk(form.password)) {
+      setFieldErrors({ password: 'Please meet all the password rules below.' });
+      return;
+    }
     setBusy(true);
     try {
-      await candidateRegister(form.fullName, form.email, form.password, form.phone || null);
+      const result = await candidateRegister(form.fullName, form.email, form.password, form.phone || null);
+      if (result.status === 'CODE_SENT') {
+        setPending({ email: result.email, purpose: result.purpose });
+        setBusy(false);
+      }
     } catch (err) {
       setError(err.message);
       setFieldErrors(err.fieldErrors || {});
       setBusy(false);
     }
   };
+
+  if (pending) {
+    return (
+      <div className="card auth-card careers-auth">
+        <CodeStep
+          email={pending.email}
+          purpose={pending.purpose}
+          onVerify={(code) => verifyCode(pending.email, pending.purpose, code)}
+          onBack={() => setPending(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <form className="card auth-card careers-auth" onSubmit={submit}>
@@ -51,8 +75,10 @@ export default function CandidateRegister() {
       </label>
       <label>
         Password
-          <PasswordInput value={form.password} onChange={update('password')} minLength={6} required />        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+        <PasswordInput value={form.password} onChange={update('password')} required />
+        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
       </label>
+      <PasswordRules password={form.password} />
       <label>
         Phone <span className="muted">(optional)</span>
         <input type="tel" value={form.phone} onChange={update('phone')} />
