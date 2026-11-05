@@ -150,11 +150,11 @@ class JobApplicationServiceTest {
     @Test
     @DisplayName("HR can reinstate an auto-rejected application")
     void hrCanReinstateAutoReject() {
-        JobApplication app = JobApplication.builder().id("app-1").status(Status.AUTO_REJECTED).build();
+        JobApplication app = JobApplication.builder().id("app-1").companyId("co-1").status(Status.AUTO_REJECTED).build();
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
         when(applicationRepository.save(any(JobApplication.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        JobApplication result = service.decide("app-1",
+        JobApplication result = service.decide("co-1", "app-1",
                 new DecisionRequest(Decision.REINSTATE, "Strong portfolio, worth a look"), "hr-1");
 
         assertThat(result.getStatus()).isEqualTo(Status.UNDER_REVIEW);
@@ -165,10 +165,10 @@ class JobApplicationServiceTest {
     @Test
     @DisplayName("A final decision (hired/rejected) cannot be changed")
     void finalDecision_isLocked() {
-        JobApplication app = JobApplication.builder().id("app-1").status(Status.HIRED).build();
+        JobApplication app = JobApplication.builder().id("app-1").companyId("co-1").status(Status.HIRED).build();
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
 
-        assertThatThrownBy(() -> service.decide("app-1", new DecisionRequest(Decision.REJECTED, null), "hr-1"))
+        assertThatThrownBy(() -> service.decide("co-1", "app-1", new DecisionRequest(Decision.REJECTED, null), "hr-1"))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

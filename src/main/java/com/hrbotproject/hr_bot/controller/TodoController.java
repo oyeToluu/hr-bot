@@ -34,6 +34,7 @@ public class TodoController {
         return todoService.mine(me.getEmployeeId());
     }
 
+
     @PostMapping
     public ResponseEntity<TodoItem> create(
             @AuthenticationPrincipal EmployeePrincipal me,
@@ -69,7 +70,6 @@ public class TodoController {
 
     // Only the tasks HR assigned; the employee's personal tasks stay private.
     @GetMapping("/employee/{employeeId}")
-    public List<TodoItem> assignedTo(@PathVariable String employeeId) {
-        return todoService.assignedByHr(employeeId);
-    }
+    public List<TodoItem> assignedTo(@AuthenticationPrincipal EmployeePrincipal hr, @PathVariable String employeeId) {
+        return todoService.assignedByHr(hr.getCompanyId(), employeeId);    }
 }

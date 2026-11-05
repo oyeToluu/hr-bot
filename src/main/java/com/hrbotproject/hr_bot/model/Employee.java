@@ -58,6 +58,9 @@ public class Employee {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    
     private Boolean emailVerified;
+
+    /** The company this person works for. */
+    @Indexed
+    private String companyId;
 }

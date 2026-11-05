@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -24,6 +25,10 @@ public class LeaveRequest {
 
     @NotNull
     private String employeeId;
+
+    
+    @Indexed
+    private String companyId;
 
     public enum LeaveType { ANNUAL, SICK, CASUAL, MATERNITY, PATERNITY, UNPAID }
 

@@ -33,13 +33,13 @@ public class JobApplicationController {
     }
 
     @GetMapping("/{id}")
-    public JobApplication get(@PathVariable String id) {
-        return jobApplicationService.findById(id);
+    public JobApplication get(@AuthenticationPrincipal EmployeePrincipal principal, @PathVariable String id) {
+        return jobApplicationService.findById(principal.getCompanyId(), id);
     }
 
     @GetMapping("/{id}/cv")
-    public ResponseEntity<byte[]> downloadCv(@PathVariable String id) {
-        CvDownload cv = jobApplicationService.downloadCv(id);
+    public ResponseEntity<byte[]> downloadCv(@AuthenticationPrincipal EmployeePrincipal principal, @PathVariable String id) {
+        CvDownload cv = jobApplicationService.downloadCv(principal.getCompanyId(), id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(cv.fileName(), StandardCharsets.UTF_8).build().toString())
@@ -54,6 +54,6 @@ public class JobApplicationController {
             @PathVariable String id,
             @Valid @RequestBody DecisionRequest req
     ) {
-        return jobApplicationService.decide(id, req, principal.getEmployeeId());
+        return jobApplicationService.decide(principal.getCompanyId(), id, req, principal.getEmployeeId());
     }
 }

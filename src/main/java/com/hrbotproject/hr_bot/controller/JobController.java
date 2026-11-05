@@ -33,9 +33,12 @@ public class JobController {
     private final JobPostingService jobPostingService;
     private final JobApplicationService jobApplicationService;
 
+    // Every company's open jobs, or just one company's with ?company=<slug>
     @GetMapping
-    public List<JobPosting> openJobs() {
-        return jobPostingService.listOpen();
+    public List<JobPosting> openJobs(@RequestParam(required = false) String company) {
+        return company == null || company.isBlank()
+                ? jobPostingService.listOpen()
+                : jobPostingService.listOpenAt(company);
     }
 
     @GetMapping("/{id}")
@@ -59,8 +62,8 @@ public class JobController {
     // ---- HR admin ----
 
     @GetMapping("/manage")
-    public List<JobSummary> allJobs() {
-        return jobPostingService.listForHr();
+    public List<JobSummary> allJobs(@AuthenticationPrincipal EmployeePrincipal principal) {
+        return jobPostingService.listForHr(principal.getCompanyId());
     }
 
     @PostMapping
@@ -68,27 +71,31 @@ public class JobController {
             @AuthenticationPrincipal EmployeePrincipal principal,
             @Valid @RequestBody JobRequest req
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(jobPostingService.create(req, principal.getEmployeeId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(jobPostingService.create(req, principal.getEmployee()));
     }
 
     @PutMapping("/{id}")
-    public JobPosting update(@PathVariable String id, @Valid @RequestBody JobRequest req) {
-        return jobPostingService.update(id, req);
+    public JobPosting update(
+            @AuthenticationPrincipal EmployeePrincipal principal,
+            @PathVariable String id,
+            @Valid @RequestBody JobRequest req
+    ) {
+        return jobPostingService.update(principal.getCompanyId(), id, req);
     }
 
     @PatchMapping("/{id}/close")
-    public JobPosting close(@PathVariable String id) {
-        return jobPostingService.setOpen(id, false);
+    public JobPosting close(@AuthenticationPrincipal EmployeePrincipal principal, @PathVariable String id) {
+        return jobPostingService.setOpen(principal.getCompanyId(), id, false);
     }
 
     @PatchMapping("/{id}/reopen")
-    public JobPosting reopen(@PathVariable String id) {
-        return jobPostingService.setOpen(id, true);
+    public JobPosting reopen(@AuthenticationPrincipal EmployeePrincipal principal, @PathVariable String id) {
+        return jobPostingService.setOpen(principal.getCompanyId(), id, true);
     }
 
     // Ranked by the screening bot, best fit first
     @GetMapping("/{id}/applications")
-    public List<JobApplication> applications(@PathVariable String id) {
-        return jobApplicationService.forJob(id);
+    public List<JobApplication> applications(@AuthenticationPrincipal EmployeePrincipal principal, @PathVariable String id) {
+        return jobApplicationService.forJob(principal.getCompanyId(), id);
     }
 }

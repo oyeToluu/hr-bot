@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-// EmployeeService is read-only now (creation lives in AuthController via
-// /api/auth/register, since that's the only path that sets a password).
+// EmployeeService is read-only (staff join through the company's invite link
+// at /api/auth/register). HR only ever sees their own company's staff.
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
 
@@ -33,12 +33,22 @@ class EmployeeServiceTest {
     }
 
     @Test
-    @DisplayName("findById() returns the employee when present")
+    @DisplayName("findById() returns the employee when they are in HR's company")
     void findById_returnsEmployee() {
-        Employee employee = Employee.builder().id("emp-1").fullName("Ada").email("ada@hrbots.test").build();
+        Employee employee = Employee.builder().id("emp-1").fullName("Ada").email("ada@hrbots.test").companyId("co-1").build();
         when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
 
-        assertThat(employeeService.findById("emp-1")).isEqualTo(employee);
+        assertThat(employeeService.findById("co-1", "emp-1")).isEqualTo(employee);
+    }
+
+    @Test
+    @DisplayName("findById() hides staff of another company")
+    void findById_hidesOtherCompanies() {
+        Employee employee = Employee.builder().id("emp-1").fullName("Ada").email("ada@hrbots.test").companyId("co-1").build();
+        when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
+
+        assertThatThrownBy(() -> employeeService.findById("co-2", "emp-1"))
+                .isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
@@ -46,16 +56,16 @@ class EmployeeServiceTest {
     void findById_throwsWhenMissing() {
         when(employeeRepository.findById("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> employeeService.findById("ghost"))
+        assertThatThrownBy(() -> employeeService.findById("co-1", "ghost"))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
-    @DisplayName("findAll() delegates to the repository")
-    void findAll_delegatesToRepository() {
-        List<Employee> expected = List.of(Employee.builder().id("emp-1").build());
-        when(employeeRepository.findAll()).thenReturn(expected);
+    @DisplayName("findAll() lists only the given company's staff")
+    void findAll_onlyOneCompany() {
+        List<Employee> expected = List.of(Employee.builder().id("emp-1").companyId("co-1").build());
+        when(employeeRepository.findByCompanyId("co-1")).thenReturn(expected);
 
-        assertThat(employeeService.findAll()).isEqualTo(expected);
+        assertThat(employeeService.findAll("co-1")).isEqualTo(expected);
     }
 }

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,11 @@ public class JobPosting {
 
     @NotBlank
     private String title;
+
+    /** The company hiring. companyName is copied here so the public job board can show it. */
+    @Indexed
+    private String companyId;
+    private String companyName;
 
     private String department;
 

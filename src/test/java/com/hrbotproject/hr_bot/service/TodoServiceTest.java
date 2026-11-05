@@ -119,8 +119,8 @@ class TodoServiceTest {
     @Test
     @DisplayName("assign() puts the task on the employee's list with the HR admin's name")
     void assign_addsTaskFromHr() {
-        Employee hr = Employee.builder().id("hr-1").fullName("Toni HR Admin").build();
-        Employee ada = Employee.builder().id("ada").fullName("Ada Okafor").build();
+        Employee hr = Employee.builder().id("hr-1").companyId("co-1").fullName("Toni HR Admin").build();
+        Employee ada = Employee.builder().id("ada").companyId("co-1").fullName("Ada Okafor").build();
         when(employeeRepository.findById("ada")).thenReturn(Optional.of(ada));
         when(todoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -135,7 +135,7 @@ class TodoServiceTest {
     @Test
     @DisplayName("assign() rejects an employee who doesn't exist")
     void assign_unknownEmployee() {
-        Employee hr = Employee.builder().id("hr-1").fullName("Toni HR Admin").build();
+        Employee hr = Employee.builder().id("hr-1").companyId("co-1").fullName("Toni HR Admin").build();
         when(employeeRepository.findById("nobody")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> todoService.assign(hr, new AssignTodoRequest("nobody", "Task", null, null)))

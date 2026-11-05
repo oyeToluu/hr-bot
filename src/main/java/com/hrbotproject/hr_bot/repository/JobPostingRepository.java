@@ -8,4 +8,8 @@ import java.util.List;
 public interface JobPostingRepository extends MongoRepository<JobPosting, String> {
     List<JobPosting> findByOpenTrueOrderByCreatedAtDesc();
     List<JobPosting> findAllByOrderByCreatedAtDesc();
+    
+    // ---- one company's jobs ----
+    List<JobPosting> findByCompanyIdAndOpenTrueOrderByCreatedAtDesc(String companyId);
+    List<JobPosting> findByCompanyIdOrderByCreatedAtDesc(String companyId);
 }

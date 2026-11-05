@@ -44,6 +44,7 @@ export default function JobDetail() {
       <p className="small">
         <Link to="/careers">← All jobs</Link>
       </p>
+       {job.companyName && <p className="eyebrow">{job.companyName}</p>}
       <h1>{job.title}</h1>
       <p className="muted">{[job.department, job.location].filter(Boolean).join(' · ')}</p>
 

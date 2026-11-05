@@ -2,11 +2,13 @@ package com.hrbotproject.hr_bot.service;
 
 import com.hrbotproject.hr_bot.dto.AuthDtos.LoginRequest;
 import com.hrbotproject.hr_bot.dto.AuthDtos.RegisterRequest;
+import com.hrbotproject.hr_bot.dto.CompanyDtos.RegisterCompanyRequest;
 import com.hrbotproject.hr_bot.dto.RecruitmentDtos.CandidateLoginRequest;
 import com.hrbotproject.hr_bot.dto.RecruitmentDtos.CandidateRegisterRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.AuthResult;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.MessageResponse;
 import com.hrbotproject.hr_bot.model.Candidate;
+import com.hrbotproject.hr_bot.model.Company;
 import com.hrbotproject.hr_bot.model.EmailCode.Purpose;
 import com.hrbotproject.hr_bot.model.Employee;
 import com.hrbotproject.hr_bot.repository.CandidateRepository;
@@ -42,7 +44,7 @@ import java.util.stream.Collectors;
 public class AccountSecurityService {
 
     static final String SENT_IF_EXISTS =
-            "If an account exists for that email, we've sent a code to it. Check your inbox and spam folder.";
+    "If an account exists for that email, we've sent a code to it. Check your inbox and spam folder.";
 
     private final EmployeeRepository employeeRepository;
     private final CandidateRepository candidateRepository;
@@ -51,6 +53,7 @@ public class AccountSecurityService {
     private final JwtService jwtService;
     private final EmailCodeService codes;
     private final DeviceTrust deviceTrust;
+    private final CompanyService companies;
     private final boolean codesEnabled;
     private final Set<String> exemptEmails;
 
@@ -62,6 +65,7 @@ public class AccountSecurityService {
             JwtService jwtService,
             EmailCodeService codes,
             DeviceTrust deviceTrust,
+            CompanyService companies,
             @Value("${app.auth.email-codes-enabled:true}") boolean codesEnabled,
             @Value("${app.auth.code-exempt-emails:}") String exemptEmails
     ) {
@@ -72,6 +76,7 @@ public class AccountSecurityService {
         this.jwtService = jwtService;
         this.codes = codes;
         this.deviceTrust = deviceTrust;
+        this.companies = companies;
         this.codesEnabled = codesEnabled;
         this.exemptEmails = Arrays.stream(exemptEmails.split(","))
                 .map(AccountSecurityService::normalize)
@@ -80,8 +85,9 @@ public class AccountSecurityService {
     }
 
     // ---------- sign up ----------
-
+   /** A staff member joining their company through the join link HR shared. */
     public AuthResult registerEmployee(RegisterRequest req) {
+        Company company = companies.byJoinCode(req.inviteCode());
         String email = normalize(req.email());
         makeRoomFor(email);
         boolean needsCode = codesRequired(email);
@@ -92,6 +98,7 @@ public class AccountSecurityService {
                 .password(passwordEncoder.encode(req.password()))
                 .department(req.department() == null || req.department().isBlank() ? "Unassigned" : req.department().trim())
                 .role(Employee.Role.EMPLOYEE) // always EMPLOYEE on self-registration
+                .companyId(company.getId())
                 .emailVerified(!needsCode)
                 .build());
 
@@ -104,6 +111,36 @@ public class AccountSecurityService {
         }
         return AuthResult.codeSent(email, Purpose.SIGNUP);
     }
+   
+       /** A business signing up: creates the company and makes this person its first HR admin. */
+    public AuthResult registerCompany(RegisterCompanyRequest req) {
+        String email = normalize(req.email());
+        makeRoomFor(email);
+        boolean needsCode = codesRequired(email);
+
+        Company company = companies.create(req.companyName(), req.industry());
+        Employee admin = employeeRepository.save(Employee.builder()
+                .fullName(req.fullName().trim())
+                .email(email)
+                .password(passwordEncoder.encode(req.password()))
+                .department("Human Resources")
+                .role(Employee.Role.HR_ADMIN)
+                .companyId(company.getId())
+                .onboardingComplete(true)
+                .emailVerified(!needsCode)
+                .build());
+
+        if (!needsCode) return loggedIn(admin, null);
+        try {
+            codes.issue(email, Purpose.SIGNUP, admin.getFullName(), false);
+        } catch (IllegalStateException e) {
+            employeeRepository.delete(admin); // couldn't email the code: let them try again cleanly
+            companies.deleteIfEmpty(company.getId());
+            throw e;
+        }
+        return AuthResult.codeSent(email, Purpose.SIGNUP);
+    }
+
 
     public AuthResult registerCandidate(CandidateRegisterRequest req) {
         String email = normalize(req.email());
@@ -128,15 +165,17 @@ public class AccountSecurityService {
         return AuthResult.codeSent(email, Purpose.SIGNUP);
     }
 
-    /**
+        /**
      * One email = one account across staff and applicants. An account that never
      * confirmed its email doesn't block the real owner from signing up.
      */
     private void makeRoomFor(String email) {
         Optional<Employee> employee = findEmployee(email);
         if (employee.isPresent()) {
-            if (Boolean.FALSE.equals(employee.get().getEmailVerified())) employeeRepository.delete(employee.get());
-            else throw new IllegalArgumentException("An account with this email already exists");
+            if (Boolean.FALSE.equals(employee.get().getEmailVerified())) {
+                employeeRepository.delete(employee.get());
+                companies.deleteIfEmpty(employee.get().getCompanyId()); // a company sign-up that was never confirmed
+            } else throw new IllegalArgumentException("An account with this email already exists");
         }
         Optional<Candidate> candidate = findCandidate(email);
         if (candidate.isPresent()) {

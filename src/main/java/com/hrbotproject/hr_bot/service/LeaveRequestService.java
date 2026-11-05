@@ -36,6 +36,7 @@ public class LeaveRequestService {
 
         LeaveRequest leaveRequest = LeaveRequest.builder()
                 .employeeId(employeeId)
+                .companyId(employee.getCompanyId())
                 .leaveType(req.leaveType())
                 .startDate(req.startDate())
                 .endDate(req.endDate())
@@ -50,19 +51,19 @@ public class LeaveRequestService {
         return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId);
     }
 
-    public List<LeaveRequest> findAll(LeaveRequest.Status statusFilter) {
+    public List<LeaveRequest> findAll(String companyId, LeaveRequest.Status statusFilter) {
         return statusFilter == null
-                ? leaveRequestRepository.findAllByOrderByCreatedAtDesc()
-                : leaveRequestRepository.findByStatusOrderByCreatedAtDesc(statusFilter);
+                ? leaveRequestRepository.findByCompanyIdOrderByCreatedAtDesc(companyId)
+                : leaveRequestRepository.findByCompanyIdAndStatusOrderByCreatedAtDesc(companyId, statusFilter);
     }
-
-    public LeaveRequest decide(String id, DecisionRequest decisionReq, String reviewerEmployeeId) {
+    public LeaveRequest decide(String companyId, String id, DecisionRequest decisionReq, String reviewerEmployeeId) {
         if (decisionReq.decision() != LeaveRequest.Status.APPROVED
                 && decisionReq.decision() != LeaveRequest.Status.REJECTED) {
             throw new IllegalArgumentException("decision must be APPROVED or REJECTED");
         }
 
         LeaveRequest leaveRequest = leaveRequestRepository.findById(id)
+             .filter(r -> companyId != null && companyId.equals(r.getCompanyId()))
                 .orElseThrow(() -> new NoSuchElementException("Leave request not found: " + id));
 
         if (leaveRequest.getStatus() != LeaveRequest.Status.PENDING) {

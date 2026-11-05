@@ -11,7 +11,8 @@ public class AuthDtos {
             @NotBlank String fullName,
             @NotBlank @Email String email,
             @NotBlank @Pattern(regexp = SecurityDtos.PASSWORD_RULE, message = SecurityDtos.PASSWORD_HINT) String password,
-            String department
+            String department,
+            @NotBlank(message = "Please use the invite link from your HR team") String inviteCode
             // No "role" field here on purpose: self-registration should never
             // be able to grant itself HR_ADMIN. HR admin accounts are seeded
             // or promoted by an existing HR_ADMIN, not chosen at signup.

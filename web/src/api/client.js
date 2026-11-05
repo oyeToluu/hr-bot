@@ -142,20 +142,32 @@ async function download(path, fallbackName) {
 // ---- Endpoints (match the controllers in src/main/java/.../controller) ----
 
 export const api = {
-  // AuthController
+ // AuthController
   login: (email, password) =>
     post('/api/auth/login', { email, password, deviceToken: deviceStore.get(email) }),
-  register: (fullName, email, password, department) =>
-    post('/api/auth/register', { fullName, email, password, department }),
+  // Staff join their company with the code from HR's invite link
+  register: (fullName, email, password, department, inviteCode) =>
+    post('/api/auth/register', { fullName, email, password, department, inviteCode }),
+  // A business signing up: the company and its first HR admin
+  registerCompany: (companyName, industry, fullName, email, password) =>
+    post('/api/auth/register-company', { companyName, industry, fullName, email, password }),
   me: () => get('/api/auth/me'),
 
-  // Emailed codes (staff and job applicants)
+   // Emailed codes (staff and job applicants)
   verifyCode: (email, purpose, code) => post('/api/auth/verify-code', { email, purpose, code }),
   resendCode: (email, purpose) => post('/api/auth/resend-code', { email, purpose }),
   forgotPassword: (email) => post('/api/auth/forgot-password', { email }),
   checkResetCode: (email, code) => post('/api/auth/check-reset-code', { email, code }),
   resetPassword: (email, code, newPassword) =>
     post('/api/auth/reset-password', { email, code, newPassword }),
+
+    // CompanyController
+  myCompany: () => get('/api/company'),
+  inviteStaff: (email) => post('/api/company/invite', { email }),
+  resetJoinLink: () => post('/api/company/join-link/reset'),
+  companyByJoinCode: (code) => get(`/api/companies/join/${encodeURIComponent(code)}`),
+  publicCompany: (slug) => get(`/api/companies/${encodeURIComponent(slug)}`),
+  
 
   // DashboardController
   myDashboard: () => get('/api/dashboard/me'),
@@ -205,7 +217,7 @@ export const api = {
   candidateMe: () => get('/api/candidates/me'),
 
   // JobController: public job board + candidate applying
-  openJobs: () => get('/api/jobs'),
+  openJobs: (company) => get(company ? `/api/jobs?company=${encodeURIComponent(company)}` : '/api/jobs'),
   openJob: (id) => get(`/api/jobs/${id}`),
   applyForJob: (id, file, coverNote) => {
     const form = new FormData();

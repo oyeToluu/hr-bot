@@ -59,17 +59,18 @@ public class PolicyService {
         }
     }
 
-    /** A question with no logged-in employee: policies only. */
-    public AskResponse ask(String question) {
-        return ask(question, null);
+       /** A question answered from one company's policies only, with no personal record. */
+    public AskResponse ask(String companyId, String question) {
+        return ask(companyId, question, null);
     }
 
     /**
-     * @param asker the logged-in employee (from their token), or null. Only this
-     *              employee's own record is ever given to the AI.
+     * @param companyId the asker's company. Only that company's policies are searched.
+     * @param asker     the logged-in employee (from their token), or null. Only this
+     *                  employee's own record is ever given to the AI.
      */
-    public AskResponse ask(String question, Employee asker) {
-        List<ScoredSection> all = scoreAllSections(question);
+    public AskResponse ask(String companyId, String question, Employee asker) {
+        List<ScoredSection> all = scoreAllSections(companyId, question);
 
         if (aiPolicyAnswerer.isActive()) {
             String record = asker == null ? null : buildEmployeeRecord(asker);
@@ -187,12 +188,13 @@ public class PolicyService {
         return new AskResponse(top.get(0).content(), top, false);
     }
 
-    private List<ScoredSection> scoreAllSections(String question) {
+         private List<ScoredSection> scoreAllSections(String companyId, String question) {
         Set<String> queryWords = KeywordMatcher.extractWords(question);
         List<ScoredSection> all = new ArrayList<>();
         int order = 0;
+        if (companyId == null) return all;
 
-        for (PolicyDocument doc : policyDocumentRepository.findAll()) {
+        for (PolicyDocument doc : policyDocumentRepository.findByCompanyId(companyId)) {
             if (doc.getSections() == null) continue;
             for (PolicyDocument.Section section : doc.getSections()) {
                 Set<String> bag = new HashSet<>(section.getKeywords() == null ? List.of() : section.getKeywords());
@@ -207,12 +209,12 @@ public class PolicyService {
         }
         return all;
     }
-
-    public PolicyDocument createDocument(PolicyDocument document) {
+          public PolicyDocument createDocument(String companyId, PolicyDocument document) {
+        document.setId(null); // always a new document, never overwrite an existing one
+        document.setCompanyId(companyId);
         return policyDocumentRepository.save(document);
     }
-
-    public List<PolicyDocument> listDocuments() {
-        return policyDocumentRepository.findAll();
+       public List<PolicyDocument> listDocuments(String companyId) {
+        return policyDocumentRepository.findByCompanyId(companyId);
     }
 }

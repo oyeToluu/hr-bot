@@ -9,20 +9,22 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 // Employee creation lives in AuthController (/api/auth/register), since
-// that's the only path that sets a password. This service is now
-// read-only, backing the HR-admin employee list/detail endpoints.
+// that's the only path that sets a password. This service is read-only,
+// backing the HR-admin employee list/detail endpoints. HR only ever sees
+// the staff of their own company.
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
 
-    public Employee findById(String id) {
+    public Employee findById(String companyId, String id) {
         return employeeRepository.findById(id)
+                .filter(e -> companyId != null && companyId.equals(e.getCompanyId()))
                 .orElseThrow(() -> new NoSuchElementException("Employee not found: " + id));
     }
 
-    public List<Employee> findAll() {
-        return employeeRepository.findAll();
+    public List<Employee> findAll(String companyId) {
+        return employeeRepository.findByCompanyId(companyId);
     }
 }

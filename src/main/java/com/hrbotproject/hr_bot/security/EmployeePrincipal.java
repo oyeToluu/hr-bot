@@ -29,6 +29,17 @@ public class EmployeePrincipal implements UserDetails {
         return employee.getId();
     }
 
+    
+    /** The company this staff member belongs to. Every HR query is limited to it. */
+    public String getCompanyId() {
+        String companyId = employee.getCompanyId();
+        if (companyId == null) {
+            // Never run a query with no company: it could match other companies' old records
+            throw new IllegalStateException("Your account isn't linked to a company yet. Please contact HR Bots support.");
+        }
+        return companyId;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name()));

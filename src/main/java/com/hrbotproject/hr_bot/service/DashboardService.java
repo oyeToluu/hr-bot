@@ -34,14 +34,14 @@ public class DashboardService {
         return new EmployeeDashboard(employee, recent, pending);
     }
 
-    public AdminDashboard adminDashboard() {
-        long totalEmployees = employeeRepository.countByRole(Employee.Role.EMPLOYEE);
+    public AdminDashboard adminDashboard(String companyId) {
+        long totalEmployees = employeeRepository.countByCompanyIdAndRole(companyId, Employee.Role.EMPLOYEE);
         long onboardingIncomplete = employeeRepository
-                .countByRoleAndOnboardingCompleteFalse(Employee.Role.EMPLOYEE);
+                .countByCompanyIdAndRoleAndOnboardingCompleteFalse(companyId, Employee.Role.EMPLOYEE);
 
-        long pending = leaveRequestRepository.findByStatusOrderByCreatedAtDesc(LeaveRequest.Status.PENDING).size();
-        long approved = leaveRequestRepository.findByStatusOrderByCreatedAtDesc(LeaveRequest.Status.APPROVED).size();
-        long rejected = leaveRequestRepository.findByStatusOrderByCreatedAtDesc(LeaveRequest.Status.REJECTED).size();
+        long pending = leaveRequestRepository.countByCompanyIdAndStatus(companyId, LeaveRequest.Status.PENDING);
+        long approved = leaveRequestRepository.countByCompanyIdAndStatus(companyId, LeaveRequest.Status.APPROVED);
+        long rejected = leaveRequestRepository.countByCompanyIdAndStatus(companyId, LeaveRequest.Status.REJECTED);
 
         return new AdminDashboard(totalEmployees, onboardingIncomplete, pending, approved, rejected);
     }

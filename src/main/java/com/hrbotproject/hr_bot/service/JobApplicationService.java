@@ -69,6 +69,7 @@ public class JobApplicationService {
         JobApplication application = JobApplication.builder()
                 .jobId(job.getId())
                 .jobTitle(job.getTitle())
+                .companyId(job.getCompanyId())
                 .candidateId(candidate.getId())
                 .candidateName(candidate.getFullName())
                 .candidateEmail(candidate.getEmail())
@@ -113,19 +114,21 @@ public class JobApplicationService {
                 .toList();
     }
 
-    /** HR: every application for a job, best score first. */
-    public List<JobApplication> forJob(String jobId) {
-        jobPostingService.findById(jobId); // 404 if the job doesn't exist
+    /** HR: every application for one of their company's jobs, best score first. */
+    public List<JobApplication> forJob(String companyId, String jobId) {
+        jobPostingService.findOwned(companyId, jobId); // 404 if it isn't HR's company's job
         return applicationRepository.findByJobIdOrderByFinalScoreDesc(jobId);
     }
 
-    public JobApplication findById(String id) {
+    /** HR: one application to their company. Other companies' applications look like they don't exist. */
+    public JobApplication findById(String companyId, String id) {
         return applicationRepository.findById(id)
+                .filter(a -> companyId != null && companyId.equals(a.getCompanyId()))
                 .orElseThrow(() -> new NoSuchElementException("Application not found: " + id));
     }
 
-    public CvDownload downloadCv(String id) {
-        JobApplication a = findById(id);
+    public CvDownload downloadCv(String companyId, String id) {
+        JobApplication a = findById(companyId, id);
         // Browser-supplied content type; only trust a plain "type/subtype".
         String type = a.getCvContentType() != null && a.getCvContentType().matches("[\\w.+-]+/[\\w.+-]+")
                 ? a.getCvContentType()
@@ -134,8 +137,8 @@ public class JobApplicationService {
     }
 
     /** The human takes over: HR moves the application on, or reinstates an auto-reject. */
-    public JobApplication decide(String id, DecisionRequest req, String hrEmployeeId) {
-        JobApplication a = findById(id);
+    public JobApplication decide(String companyId, String id, DecisionRequest req, String hrEmployeeId) {
+        JobApplication a = findById(companyId, id);
 
         Status next = switch (req.decision()) {
             case INTERVIEW -> Status.INTERVIEW;

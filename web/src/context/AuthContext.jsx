@@ -54,8 +54,11 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => handle(await api.login(email, password));
 
-  const register = async (fullName, email, password, department) =>
-    handle(await api.register(fullName, email, password, department));
+  const register = async (fullName, email, password, department, inviteCode) =>
+    handle(await api.register(fullName, email, password, department, inviteCode));
+
+  const registerCompany = async (companyName, industry, fullName, email, password) =>
+    handle(await api.registerCompany(companyName, industry, fullName, email, password));
 
   const candidateLogin = async (email, password) => handle(await api.candidateLogin(email, password));
 
@@ -79,6 +82,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        registerCompany,
         candidateLogin,
         candidateRegister,
         verifyCode,

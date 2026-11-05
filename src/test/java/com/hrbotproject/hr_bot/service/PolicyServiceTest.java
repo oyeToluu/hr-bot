@@ -74,9 +74,9 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() returns the section with the most keyword overlap")
     void ask_returnsBestMatchingSection() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
 
-        AskResponse response = policyService.ask("How many annual leave days do I get?");
+        AskResponse response = policyService.ask("co-1", "How many annual leave days do I get?");
 
         assertThat(response.matches()).isNotEmpty();
         assertThat(response.matches().get(0).heading()).isEqualTo("Leave Policy");
@@ -87,9 +87,9 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() returns a fallback message when no section matches")
     void ask_returnsFallbackWhenNoMatch() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
 
-        AskResponse response = policyService.ask("What is the dress code?");
+        AskResponse response = policyService.ask("co-1", "What is the dress code?");
 
         assertThat(response.matches()).isEmpty();
         assertThat(response.answer()).contains("couldn't find a matching policy section");
@@ -106,9 +106,9 @@ class PolicyServiceTest {
                         section("C", "leave"), section("D", "leave")
                 ))
                 .build();
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(doc));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(doc));
 
-        AskResponse response = policyService.ask("leave policy question");
+        AskResponse response = policyService.ask("co-1", "leave policy question");
 
         assertThat(response.matches()).hasSize(3);
     }
@@ -118,14 +118,14 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() uses the AI answer and the sections it cites as sources")
     void ask_usesAiAnswerWithSources() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         // Section 2 is Remote Work Policy (sections are numbered in order)
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.of(
                 new AiAnswer(true, "Yes, up to 2 days a week once your probation ends.", List.of(2), false)));
 
         // Worded with no keywords at all - the AI still gets every section
-        AskResponse response = policyService.ask("Am I allowed to do my job from my house?");
+        AskResponse response = policyService.ask("co-1", "Am I allowed to do my job from my house?");
 
         assertThat(response.aiAnswer()).isTrue();
         assertThat(response.answer()).isEqualTo("Yes, up to 2 days a week once your probation ends.");
@@ -136,12 +136,12 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() shows no sources when the AI says the policies don't cover it")
     void ask_aiNotFoundHasNoSources() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.of(
                 new AiAnswer(false, "The company policies don't cover the dress code. Please contact HR.", List.of(1), false)));
 
-        AskResponse response = policyService.ask("What is the dress code?");
+        AskResponse response = policyService.ask("co-1", "What is the dress code?");
 
         assertThat(response.aiAnswer()).isTrue();
         assertThat(response.matches()).isEmpty();
@@ -151,12 +151,12 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() ignores source numbers that don't exist")
     void ask_ignoresInvalidSourceNumbers() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.of(
                 new AiAnswer(true, "You get 20 annual leave days.", List.of(1, 1, 7, 0), false)));
 
-        AskResponse response = policyService.ask("leave days?");
+        AskResponse response = policyService.ask("co-1", "leave days?");
 
         assertThat(response.matches()).hasSize(1);
         assertThat(response.matches().get(0).heading()).isEqualTo("Leave Policy");
@@ -165,11 +165,11 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() falls back to keyword matching when the AI call fails")
     void ask_fallsBackWhenAiFails() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.empty());
 
-        AskResponse response = policyService.ask("How many annual leave days do I get?");
+        AskResponse response = policyService.ask("co-1", "How many annual leave days do I get?");
 
         assertThat(response.aiAnswer()).isFalse();
         assertThat(response.answer()).contains("20 annual leave days");
@@ -193,7 +193,7 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() gives the AI only the asker's own record, without password or email")
     void ask_sendsOnlyOwnRecordToAi() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         when(leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc("emp-1")).thenReturn(List.of(
                 LeaveRequest.builder().employeeId("emp-1").leaveType(LeaveRequest.LeaveType.ANNUAL)
@@ -202,7 +202,7 @@ class PolicyServiceTest {
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.of(
                 new AiAnswer(true, "You have 15 leave days left.", List.of(), true)));
 
-        AskResponse response = policyService.ask("How many leave days do I have left?", ada());
+        AskResponse response = policyService.ask("co-1", "How many leave days do I have left?", ada());
 
         ArgumentCaptor<String> record = ArgumentCaptor.forClass(String.class);
         verify(aiPolicyAnswerer).answer(eq("How many leave days do I have left?"), anyList(), record.capture());
@@ -218,12 +218,12 @@ class PolicyServiceTest {
     @Test
     @DisplayName("ask() never shows 'Your HR record' as a source when nobody is logged in")
     void ask_noRecordSourceWithoutAsker() {
-        when(policyDocumentRepository.findAll()).thenReturn(List.of(handbook()));
+        when(policyDocumentRepository.findByCompanyId("co-1")).thenReturn(List.of(handbook()));
         when(aiPolicyAnswerer.isActive()).thenReturn(true);
         when(aiPolicyAnswerer.answer(anyString(), anyList(), any())).thenReturn(Optional.of(
                 new AiAnswer(true, "You get 20 annual leave days.", List.of(1), true)));
 
-        AskResponse response = policyService.ask("How many leave days do I get?");
+        AskResponse response = policyService.ask("co-1", "How many leave days do I get?");
 
         verify(aiPolicyAnswerer).answer(anyString(), anyList(), isNull());
         assertThat(response.matches()).extracting("docTitle").containsExactly("Employee Handbook 2026");

@@ -37,10 +37,13 @@ public class LeaveRequestController {
         return leaveRequestService.findMine(principal.getEmployeeId());
     }
 
-    // HR only (enforced in SecurityConfig): all requests, optional ?status=PENDING filter
+        // HR only (enforced in SecurityConfig): all requests in HR's company, optional ?status=PENDING filter
     @GetMapping
-    public List<LeaveRequest> all(@RequestParam(required = false) LeaveRequest.Status status) {
-        return leaveRequestService.findAll(status);
+    public List<LeaveRequest> all(
+            @AuthenticationPrincipal EmployeePrincipal principal,
+            @RequestParam(required = false) LeaveRequest.Status status
+    ) {
+        return leaveRequestService.findAll(principal.getCompanyId(), status);
     }
 
     // HR only (enforced in SecurityConfig): approve or reject
@@ -50,6 +53,5 @@ public class LeaveRequestController {
             @PathVariable String id,
             @Valid @RequestBody DecisionRequest req
     ) {
-        return leaveRequestService.decide(id, req, principal.getEmployeeId());
-    }
+        return leaveRequestService.decide(principal.getCompanyId(), id, req, principal.getEmployeeId());    }
 }

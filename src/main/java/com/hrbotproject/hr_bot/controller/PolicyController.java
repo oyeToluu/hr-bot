@@ -26,12 +26,11 @@ public class PolicyController {
             @AuthenticationPrincipal EmployeePrincipal principal,
             @Valid @RequestBody AskRequest req
     ) {
-        return policyService.ask(req.question(), principal == null ? null : principal.getEmployee());
-    }
+        return policyService.ask(principal.getCompanyId(), req.question(), principal.getEmployee());    }
 
     @GetMapping("/documents")
-    public List<PolicyDocument> listDocuments() {
-        return policyService.listDocuments();
+       public List<PolicyDocument> listDocuments(@AuthenticationPrincipal EmployeePrincipal principal) {
+        return policyService.listDocuments(principal.getCompanyId());
     }
 
     // HR only (enforced in SecurityConfig). uploadedByEmployeeId is
@@ -43,6 +42,6 @@ public class PolicyController {
             @Valid @RequestBody PolicyDocument document
     ) {
         document.setUploadedByEmployeeId(principal.getEmployeeId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(policyService.createDocument(document));
-    }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(policyService.createDocument(principal.getCompanyId(), document));    }
 }

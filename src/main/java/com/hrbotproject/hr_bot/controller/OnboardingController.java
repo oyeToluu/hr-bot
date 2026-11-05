@@ -24,19 +24,22 @@ public class OnboardingController {
     private final OnboardingService onboardingService;
 
     @PostMapping("/ask")
-    public AskResponse ask(@Valid @RequestBody AskRequest req) {
-        return onboardingService.ask(req.message());
+    public AskResponse ask(@AuthenticationPrincipal EmployeePrincipal principal, @Valid @RequestBody AskRequest req) {
+        return onboardingService.ask(principal.getCompanyId(), req.message());
     }
 
     @GetMapping("/faqs")
-    public List<OnboardingFaq> listFaqs() {
-        return onboardingService.listFaqs();
+    public List<OnboardingFaq> listFaqs(@AuthenticationPrincipal EmployeePrincipal principal) {
+        return onboardingService.listFaqs(principal.getCompanyId());
     }
 
-    // HR only (enforced in SecurityConfig)
+    // HR only (enforced in SecurityConfig). The FAQ goes into HR's own company.
     @PostMapping("/faqs")
-    public ResponseEntity<OnboardingFaq> createFaq(@Valid @RequestBody CreateFaqRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(onboardingService.createFaq(req));
+    public ResponseEntity<OnboardingFaq> createFaq(
+            @AuthenticationPrincipal EmployeePrincipal principal,
+            @Valid @RequestBody CreateFaqRequest req
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(onboardingService.createFaq(principal.getCompanyId(), req));
     }
 
     @PatchMapping("/complete")

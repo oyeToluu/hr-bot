@@ -5,6 +5,7 @@ import CareersLayout from './components/CareersLayout';
 import { RequireAdmin, RequireAuth, RequireCandidate } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import RegisterCompany from './pages/RegisterCompany';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Leave from './pages/Leave';
@@ -17,6 +18,7 @@ import Settings from './pages/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLeave from './pages/admin/AdminLeave';
 import AdminEmployees from './pages/admin/AdminEmployees';
+import AdminCompany from './pages/admin/AdminCompany';
 import AdminContent from './pages/admin/AdminContent';
 import AdminRecruitment from './pages/admin/AdminRecruitment';
 import AdminApplicants from './pages/admin/AdminApplicants';
@@ -35,10 +37,12 @@ export default function App() {
   // Where "/" and unknown URLs go, for whoever is logged in
   const landing = employee ? home : candidate ? '/careers/applications' : '/login';
 
-   return (
+  return (
     <Routes>
       <Route path="/login" element={employee ? <Navigate to={home} replace /> : <Login />} />
       <Route path="/register" element={employee ? <Navigate to={home} replace /> : <Register />} />
+      <Route path="/join/:code" element={employee ? <Navigate to={home} replace /> : <Register />} />
+      <Route path="/register-company" element={employee ? <Navigate to={home} replace /> : <RegisterCompany />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/dashboard" element={<Dashboard />} />
@@ -52,6 +56,7 @@ export default function App() {
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/leave" element={<RequireAdmin><AdminLeave /></RequireAdmin>} />
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployees /></RequireAdmin>} />
+        <Route path="/admin/company" element={<RequireAdmin><AdminCompany /></RequireAdmin>} />
         <Route path="/admin/content" element={<RequireAdmin><AdminContent /></RequireAdmin>} />
         <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
         <Route path="/admin/recruitment" element={<RequireAdmin><AdminRecruitment /></RequireAdmin>} />

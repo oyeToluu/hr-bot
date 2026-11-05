@@ -24,7 +24,7 @@ public class DashboardController {
 
     // HR only (enforced in SecurityConfig)
     @GetMapping("/admin")
-    public AdminDashboard adminDashboard() {
-        return dashboardService.adminDashboard();
-    }
+       public AdminDashboard adminDashboard(@AuthenticationPrincipal EmployeePrincipal principal) {
+        return dashboardService.adminDashboard(principal.getCompanyId());
+       }
 }

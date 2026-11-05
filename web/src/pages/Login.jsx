@@ -73,7 +73,11 @@ export default function Login() {
               {busy ? 'Logging in…' : 'Log in'}
             </button>
             <p className="muted small">
-              New employee? <Link to="/register">Create an account</Link>
+              New employee? Open the invite link from your HR team, or{' '}
+              <Link to="/register">enter your invite code</Link>.
+            </p>
+            <p className="muted small">
+              Setting up HR Bots for your business? <Link to="/register-company">Register your company</Link>
             </p>
             <p className="muted small">
               Looking for a job? <Link to="/careers">See open positions</Link>

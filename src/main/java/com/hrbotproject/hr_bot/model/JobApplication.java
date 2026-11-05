@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -33,10 +34,17 @@ public class JobApplication {
     private String id;
 
     private String jobId;
+
     private String jobTitle;
 
+    /** The company that posted the job. Only its HR admins can see this application. */
+    @Indexed
+    private String companyId;
+
     private String candidateId;
+
     private String candidateName;
+
     private String candidateEmail;
 
     private String coverNote;

@@ -1362,3 +1362,86 @@ input.code-input {
   gap: 0.9rem;
 }
 
+/* ---------- Companies (Stage 5) ---------- */
+
+.brand-company {
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: var(--rose-soft);
+  color: var(--rose);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.page-head h1 {
+  margin: 0;
+}
+
+.company-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.join-link-row {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.join-link-row input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.join-link-row button,
+.invite-form button {
+  white-space: nowrap;
+}
+
+.invite-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.invite-form label {
+  flex: 1;
+  min-width: 220px;
+}
+
+.next-steps {
+  padding-left: 1.1rem;
+}
+
+.next-steps li {
+  margin-bottom: 0.4rem;
+}
+
+@media (max-width: 860px) {
+  .company-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .brand-company {
+    display: none;
+  }
+}
+

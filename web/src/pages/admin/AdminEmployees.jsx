@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { ErrorBox, Loading, formatDate, label } from '../../components/ui';
 
@@ -24,7 +25,12 @@ export default function AdminEmployees() {
 
   return (
     <>
-      <h1>Employees</h1>
+      <div className="page-head">
+        <h1>Employees</h1>
+        <Link className="button" to="/admin/company">
+          Invite staff
+        </Link>
+      </div>
       <input
         className="search"
         placeholder="Search by name, email or department"

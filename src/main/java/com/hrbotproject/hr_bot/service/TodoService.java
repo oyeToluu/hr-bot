@@ -89,8 +89,7 @@ public class TodoService {
     // ---------- HR admin ----------
 
     public TodoItem assign(Employee hr, AssignTodoRequest req) {
-        Employee target = employeeRepository.findById(req.employeeId())
-                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
+        Employee target = findColleague(hr.getCompanyId(), req.employeeId());     
 
         TodoItem item = new TodoItem();
         item.setEmployeeId(target.getId());
@@ -107,13 +106,22 @@ public class TodoService {
      * The tasks HR has assigned to one employee, so HR can follow up.
      * The employee's own personal tasks stay private to them.
      */
-    public List<TodoItem> assignedByHr(String employeeId) {
+    public List<TodoItem> assignedByHr(String companyId, String employeeId) {
+        findColleague(companyId, employeeId);
         return sorted(todoRepository.findByEmployeeId(employeeId).stream()
                 .filter(TodoItem::isAssignedByHr)
                 .toList());
     }
 
     // ---------- helpers ----------
+
+    
+    /** An employee in the given company. Staff of other companies look like they don't exist. */
+    private Employee findColleague(String companyId, String employeeId) {
+        return employeeRepository.findById(employeeId)
+                .filter(e -> companyId != null && companyId.equals(e.getCompanyId()))
+                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
+    }
 
     /**
      * Someone else's task looks exactly like a missing one (404), so ids

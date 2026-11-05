@@ -117,7 +117,7 @@ class LeaveRequestServiceTest {
     void decide_approvedAnnualLeaveDeductsBalance() {
         LeaveRequest pending = LeaveRequest.builder()
                 .id("leave-1")
-                .employeeId("emp-1")
+                .employeeId("emp-1").companyId("co-1")
                 .leaveType(LeaveRequest.LeaveType.ANNUAL)
                 .daysRequested(4)
                 .status(LeaveRequest.Status.PENDING)
@@ -127,7 +127,7 @@ class LeaveRequestServiceTest {
         when(employeeRepository.findById("emp-1")).thenReturn(Optional.of(employee));
 
         DecisionRequest decision = new DecisionRequest(LeaveRequest.Status.APPROVED, "Approved, enjoy!");
-        LeaveRequest result = leaveRequestService.decide("leave-1", decision, "hr-1");
+        LeaveRequest result = leaveRequestService.decide("co-1", "leave-1", decision, "hr-1");
 
         assertThat(result.getStatus()).isEqualTo(LeaveRequest.Status.APPROVED);
         assertThat(result.getReviewedByEmployeeId()).isEqualTo("hr-1");
@@ -142,7 +142,7 @@ class LeaveRequestServiceTest {
     void decide_rejectedLeaveDoesNotDeductBalance() {
         LeaveRequest pending = LeaveRequest.builder()
                 .id("leave-2")
-                .employeeId("emp-1")
+                .employeeId("emp-1").companyId("co-1")
                 .leaveType(LeaveRequest.LeaveType.ANNUAL)
                 .daysRequested(3)
                 .status(LeaveRequest.Status.PENDING)
@@ -151,7 +151,7 @@ class LeaveRequestServiceTest {
         when(leaveRequestRepository.findById("leave-2")).thenReturn(Optional.of(pending));
 
         DecisionRequest decision = new DecisionRequest(LeaveRequest.Status.REJECTED, "Team is short-staffed");
-        LeaveRequest result = leaveRequestService.decide("leave-2", decision, "hr-1");
+        LeaveRequest result = leaveRequestService.decide("co-1", "leave-2", decision, "hr-1");
 
         assertThat(result.getStatus()).isEqualTo(LeaveRequest.Status.REJECTED);
         verify(employeeRepository, never()).save(any());
@@ -162,7 +162,7 @@ class LeaveRequestServiceTest {
     void decide_throwsWhenAlreadyDecided() {
         LeaveRequest alreadyApproved = LeaveRequest.builder()
                 .id("leave-3")
-                .employeeId("emp-1")
+                .employeeId("emp-1").companyId("co-1")
                 .leaveType(LeaveRequest.LeaveType.SICK)
                 .daysRequested(2)
                 .status(LeaveRequest.Status.APPROVED)
@@ -172,7 +172,7 @@ class LeaveRequestServiceTest {
 
         DecisionRequest decision = new DecisionRequest(LeaveRequest.Status.REJECTED, null);
 
-        assertThatThrownBy(() -> leaveRequestService.decide("leave-3", decision, "hr-1"))
+        assertThatThrownBy(() -> leaveRequestService.decide("co-1", "leave-3", decision, "hr-1"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already");
     }
@@ -180,7 +180,7 @@ class LeaveRequestServiceTest {
     @Test
     @DisplayName("findMine() delegates to the repository for the given employee")
     void findMine_delegatesToRepository() {
-        List<LeaveRequest> expected = List.of(LeaveRequest.builder().id("leave-1").employeeId("emp-1").build());
+        List<LeaveRequest> expected = List.of(LeaveRequest.builder().id("leave-1").employeeId("emp-1").companyId("co-1").build());
         when(leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc("emp-1")).thenReturn(expected);
 
         List<LeaveRequest> result = leaveRequestService.findMine("emp-1");

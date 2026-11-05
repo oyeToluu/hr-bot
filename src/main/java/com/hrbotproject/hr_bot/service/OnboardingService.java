@@ -22,13 +22,14 @@ public class OnboardingService {
     private final OnboardingFaqRepository faqRepository;
     private final EmployeeRepository employeeRepository;
 
-    public AskResponse ask(String message) {
+    /** Answers from the asker's own company's FAQs only. */
+    public AskResponse ask(String companyId, String message) {
         Set<String> queryWords = KeywordMatcher.extractWords(message);
 
         OnboardingFaq best = null;
         int bestScore = 0;
 
-        for (OnboardingFaq faq : faqRepository.findAll()) {
+        for (OnboardingFaq faq : faqRepository.findByCompanyId(companyId)) {
             Set<String> bag = new HashSet<>(faq.getKeywords());
             bag.addAll(KeywordMatcher.extractWords(faq.getQuestion()));
 
@@ -55,12 +56,13 @@ public class OnboardingService {
         );
     }
 
-    public List<OnboardingFaq> listFaqs() {
-        return faqRepository.findAll();
+    public List<OnboardingFaq> listFaqs(String companyId) {
+        return faqRepository.findByCompanyId(companyId);
     }
 
-    public OnboardingFaq createFaq(CreateFaqRequest req) {
+    public OnboardingFaq createFaq(String companyId, CreateFaqRequest req) {
         OnboardingFaq faq = OnboardingFaq.builder()
+                .companyId(companyId)
                 .question(req.question())
                 .answer(req.answer())
                 .keywords(req.keywords() == null ? List.of() : req.keywords())

@@ -2,6 +2,7 @@ package com.hrbotproject.hr_bot.controller;
 
 import com.hrbotproject.hr_bot.dto.AuthDtos.LoginRequest;
 import com.hrbotproject.hr_bot.dto.AuthDtos.RegisterRequest;
+import com.hrbotproject.hr_bot.dto.CompanyDtos.RegisterCompanyRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.AuthResult;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.CheckResetCodeRequest;
 import com.hrbotproject.hr_bot.dto.SecurityDtos.ForgotPasswordRequest;
@@ -35,6 +36,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResult> register(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(accounts.registerEmployee(req));
+    }
+
+        // A business signing up: the company and its first HR admin
+    @PostMapping("/register-company")
+    public ResponseEntity<AuthResult> registerCompany(@Valid @RequestBody RegisterCompanyRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(accounts.registerCompany(req));
     }
 
     @PostMapping("/login")

@@ -56,9 +56,9 @@ class OnboardingServiceTest {
     @Test
     @DisplayName("ask() returns the FAQ with the most keyword overlap")
     void ask_returnsBestKeywordMatch() {
-        when(faqRepository.findAll()).thenReturn(List.of(payrollFaq, equipmentFaq));
+        when(faqRepository.findByCompanyId("co-1")).thenReturn(List.of(payrollFaq, equipmentFaq));
 
-        AskResponse response = onboardingService.ask("When will I get my salary paid?");
+        AskResponse response = onboardingService.ask("co-1", "When will I get my salary paid?");
 
         assertThat(response.matchedQuestion()).isEqualTo("When do I get paid?");
         assertThat(response.confidence()).isGreaterThan(0);
@@ -68,9 +68,9 @@ class OnboardingServiceTest {
     @Test
     @DisplayName("ask() falls back to a default answer when nothing matches")
     void ask_returnsFallbackWhenNoMatch() {
-        when(faqRepository.findAll()).thenReturn(List.of(payrollFaq, equipmentFaq));
+        when(faqRepository.findByCompanyId("co-1")).thenReturn(List.of(payrollFaq, equipmentFaq));
 
-        AskResponse response = onboardingService.ask("What is the meaning of life?");
+        AskResponse response = onboardingService.ask("co-1", "What is the meaning of life?");
 
         assertThat(response.matchedQuestion()).isNull();
         assertThat(response.confidence()).isZero();
@@ -83,7 +83,7 @@ class OnboardingServiceTest {
         CreateFaqRequest req = new CreateFaqRequest("New question?", "New answer.", null, null);
         when(faqRepository.save(any(OnboardingFaq.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        OnboardingFaq saved = onboardingService.createFaq(req);
+        OnboardingFaq saved = onboardingService.createFaq("co-1", req);
 
         assertThat(saved.getCategory()).isEqualTo(OnboardingFaq.Category.GENERAL);
         assertThat(saved.getKeywords()).isEmpty();

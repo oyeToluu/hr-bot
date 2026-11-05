@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { SettingsProvider } from '../context/SettingsContext';
 import Notifier from './Notifier';
@@ -18,6 +19,7 @@ const ADMIN_LINKS = [
   { to: '/admin', label: 'Admin overview', end: true },
   { to: '/admin/leave', label: 'Leave approvals' },
   { to: '/admin/employees', label: 'Employees' },
+  { to: '/admin/company', label: 'Company & invites' },
   { to: '/admin/tasks', label: 'Assign tasks' },
   { to: '/admin/content', label: 'FAQs & policies' },
   { to: '/admin/recruitment', label: 'Recruitment' },
@@ -26,7 +28,13 @@ const ADMIN_LINKS = [
 export default function Layout() {
   const { employee, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [company, setCompany] = useState(null);
   const close = () => setMenuOpen(false);
+
+  // The company this person works for, shown next to the logo
+  useEffect(() => {
+    api.myCompany().then(setCompany).catch(() => {});
+  }, []);
 
   return (
     <SettingsProvider>
@@ -38,6 +46,7 @@ export default function Layout() {
           <span className="brand">
             <span className="brand-dot" aria-hidden="true" />
             HR Bots
+            {company && <span className="brand-company">{company.name}</span>}
           </span>
           <span className="topbar-user">
             {employee.fullName}

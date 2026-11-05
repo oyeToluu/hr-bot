@@ -82,6 +82,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/leave/*/decision").hasRole("HR_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/onboarding/faqs").hasRole("HR_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/policy/documents").hasRole("HR_ADMIN")
+                        
+                        // ---- Companies ----
+                        // Anyone may look up a join link or a company's careers page.
+                        .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers("/api/company/invite", "/api/company/join-link/**").hasRole("HR_ADMIN")
 
                         // Everything else (leave, dashboard, onboarding, policy)
                         // is staff-only: a logged-in candidate gets 403 here.
