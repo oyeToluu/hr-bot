@@ -169,6 +169,24 @@ export const api = {
   publicCompany: (slug) => get(`/api/companies/${encodeURIComponent(slug)}`),
   
 
+  // SupportController: "Talk to a person in HR"
+  openSupport: (source, message, chat) => post('/api/support', { source, message, chat }),
+  mySupport: () => get('/api/support/mine'),
+  mySupportCounts: () => get('/api/support/mine/counts'),
+  mySupportOne: (id) => get(`/api/support/mine/${id}`),
+  replySupport: (id, message) => post(`/api/support/mine/${id}/reply`, { message }),
+  closeSupport: (id) => patch(`/api/support/mine/${id}/close`),
+  // SupportController (HR admin only)
+  supportInbox: (status) => get(status ? `/api/support/inbox?status=${status}` : '/api/support/inbox'),
+  supportInboxCounts: () => get('/api/support/inbox/counts'),
+  supportInboxOne: (id) => get(`/api/support/inbox/${id}`),
+  replySupportInbox: (id, message) => post(`/api/support/inbox/${id}/reply`, { message }),
+  closeSupportInbox: (id) => patch(`/api/support/inbox/${id}/close`),
+
+  // CeoController (the HR Bots owner only)
+  ownerCheck: () => get('/api/owner/check'),
+  ownerCompanies: () => get('/api/owner/companies'),
+
   // DashboardController
   myDashboard: () => get('/api/dashboard/me'),
   adminDashboard: () => get('/api/dashboard/admin'),

@@ -18,4 +18,6 @@ public interface EmployeeRepository extends MongoRepository<Employee, String> {
     long countByCompanyId(String companyId);
     long countByCompanyIdAndRole(String companyId, Employee.Role role);
     long countByCompanyIdAndRoleAndOnboardingCompleteFalse(String companyId, Employee.Role role);
+    List<Employee> findByCompanyIdAndRole(String companyId, Employee.Role role);
+
 }

@@ -1445,3 +1445,176 @@ input.code-input {
   }
 }
 
+/* ---------- Help requests and CEO page ---------- */
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 1.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--rose);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sidebar a:has(.nav-badge) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.handoff-offer {
+  margin: 0.75rem 0 0;
+  text-align: center;
+}
+
+.handoff {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--rose-soft);
+}
+
+.bubble.note {
+  border: 1px dashed var(--rose);
+}
+
+.ticket-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ticket-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ticket-row.is-unread .ticket-subject {
+  font-weight: 700;
+}
+
+.ticket-subject {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.ticket-who {
+  flex-basis: 100%;
+}
+
+.dot-new {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--rose);
+}
+
+.thread-log {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.thread-msg {
+  max-width: 85%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(46, 36, 67, 0.08);
+}
+
+.thread-msg.mine {
+  margin-left: auto;
+  background: var(--rose-soft);
+}
+
+.thread-msg.from-hr {
+  border-color: var(--rose);
+}
+
+.thread-msg.earlier {
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.thread-meta {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+}
+
+.thread-meta .role-tag {
+  margin-left: 0.35rem;
+}
+
+.thread-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.thread-divider {
+  margin: 0.25rem 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--rose);
+}
+
+.thread-reply {
+  margin-top: 1rem;
+}
+
+.thread-reply textarea {
+  width: 100%;
+}
+
+.thread-closed {
+  margin-top: 1rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(46, 36, 67, 0.15);
+}
+
+.tab.is-active {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .ticket-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .ticket-row > .muted {
+    display: none;
+  }
+
+  .thread-msg {
+    max-width: 100%;
+  }
+}
+

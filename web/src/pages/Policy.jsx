@@ -43,6 +43,7 @@ export default function Policy() {
           'How many sick days do I get?',
         ]}
         ask={ask}
+        handoffSource="HR_ASSISTANT"
       />
 
       {docs.map((doc) => (

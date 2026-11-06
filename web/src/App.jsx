@@ -15,6 +15,9 @@ import Todos from './pages/Todos';
 import AdminTasks from './pages/admin/AdminTasks';
 import Calendar from './pages/Calendar';
 import Settings from './pages/Settings';
+import HelpRequests from './pages/HelpRequests';
+import AdminSupport from './pages/admin/AdminSupport';
+import CeoCompanies from './pages/ceo/CeoCompanies';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLeave from './pages/admin/AdminLeave';
 import AdminEmployees from './pages/admin/AdminEmployees';
@@ -52,11 +55,14 @@ export default function App() {
         <Route path="/todos" element={<Todos />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<HelpRequests />} />
+        <Route path="/ceo" element={<CeoCompanies />} />
 
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/leave" element={<RequireAdmin><AdminLeave /></RequireAdmin>} />
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployees /></RequireAdmin>} />
         <Route path="/admin/company" element={<RequireAdmin><AdminCompany /></RequireAdmin>} />
+        <Route path="/admin/support" element={<RequireAdmin><AdminSupport /></RequireAdmin>} />
         <Route path="/admin/content" element={<RequireAdmin><AdminContent /></RequireAdmin>} />
         <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
         <Route path="/admin/recruitment" element={<RequireAdmin><AdminRecruitment /></RequireAdmin>} />

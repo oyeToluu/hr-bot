@@ -40,6 +40,7 @@ export default function Onboarding() {
         placeholder="e.g. When do I get paid?"
         suggestions={faqs.slice(0, 4).map((f) => f.question)}
         ask={ask}
+        handoffSource="ONBOARDING_BOT"
       />
 
       <div className="card">

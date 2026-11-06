@@ -12,4 +12,6 @@ public interface JobPostingRepository extends MongoRepository<JobPosting, String
     // ---- one company's jobs ----
     List<JobPosting> findByCompanyIdAndOpenTrueOrderByCreatedAtDesc(String companyId);
     List<JobPosting> findByCompanyIdOrderByCreatedAtDesc(String companyId);
+        long countByCompanyIdAndOpenTrue(String companyId);
+
 }
